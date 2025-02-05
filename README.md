@@ -33,7 +33,9 @@ Requirements
 Installation
 ------------
 
-There are multiple ways to install:
+The easiest way to run this is via the standalone executables I have already made (see bottom of this page).
+
+Other ways to install:
 
 1. Using Anaconda/miniconda:
     
@@ -77,7 +79,8 @@ There are multiple ways to install:
     -     pyinstaller neurodemo_mac.spec
     - This will create a subfolder "dist" containing a stand-alone executable that you can run by double-clicking. It will also create a subfolder "build" with intermediate files that you can generally ignore.
     - 
-    - The Windows executable should take 4-5 seconds to launch, during which it shows a splash screen. The splash screen feature is not compatible with Mac. The Mac version also might take curiously long to launch (almost 30 seconds). Not sure why, but it seems fine after that. 
+    - The Windows executable should take 4-5 seconds to launch, during which it shows a splash screen. The splash screen feature is not compatible with Mac. The Mac version also might take curiously long to launch (almost 30 seconds). Not sure why, but it seems fine after that.
+    - I recommend converting the Mac executable to a dmg file using the Disk Utility app in MacOS. This preserves the executable permissions so that others can run it without having to run chmod. Go to "File", "New Image", "Image from folder", then choose either "read only" or "read/write". (There is also a compressed option, but it failed for me)
 
 
 Running the Demo
@@ -88,3 +91,15 @@ You can launch the demo from the terminal by navigating to the location where yo
 Windows: Open the folder where you extracted the neurodemo source code. Right click `demo.py` and select "Open with..". Navigate to the location where you installed anaconda or miniconda (you may need to click something like "browse" or "choose another application" depending on your version of windows). Select `python.exe`.
 
 macOS: You can launch as above, or install the dmg file and just start the app. 
+
+
+
+Links to standalone executables (Windows and Mac M1 versions):
+----------------
+
+The following link goes to a folder containing several standalone executables:
+https://www.dropbox.com/scl/fo/grh1ihu307gn4vfzljgnt/AJnmBrKSig-7XWAAWVYLoIs?rlkey=i366zvvfd3r5rwki1qh2t6vry&dl=0
+
+When you click the download link, it may ask you to sign into Dropbox, but you don't have to. At the bottom of the dialog will be a link "continue with download only". Select that to bypass logging in.
+
+The Mac version is a dmg file. Double click it, and it will mount a virtual disk containing a single executable file. Running it will be initially blocked because I have not paid $99/year to Apple to make this an officially sanctioned app. You have to enable it in the "Privacy and Security" settings. This will enable just this app, and does not leave you more vulnerable to malicious software in general.
