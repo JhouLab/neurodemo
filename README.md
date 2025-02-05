@@ -94,12 +94,12 @@ macOS: You can launch as above, or install the dmg file and just start the app.
 
 
 
-Links to standalone executables (Windows and Mac M1 versions):
+Link to standalone executables (Windows and Mac M1 versions):
 ----------------
 
-The following link goes to a folder containing several standalone executables:
+Here is a folder containing several standalone executables:
 https://www.dropbox.com/scl/fo/grh1ihu307gn4vfzljgnt/AJnmBrKSig-7XWAAWVYLoIs?rlkey=i366zvvfd3r5rwki1qh2t6vry&dl=0
 
-When you click the download link, it may ask you to sign into Dropbox, but you don't have to. At the bottom of the dialog will be a link "continue with download only". Select that to bypass logging in.
+Click the download link for the version you want (Windows or M1 Mac). You may see a dialog asking you to sign into Dropbox. At the bottom will be a link "continue with download only". Select that to bypass logging in.
 
-The Mac version is a dmg file. Double click it, and it will mount a virtual disk containing a single executable file. Running it will be initially blocked because I have not paid $99/year to Apple to make this an officially sanctioned app. You have to enable it in the "Privacy and Security" settings. This will enable just this app, and does not leave you more vulnerable to malicious software in general.
+The Mac version is a dmg file. Double click it, and it will mount a virtual disk containing a single executable file. Running it will be initially blocked because I have not paid $99/year to Apple to make this an officially sanctioned app. You have to enable it in the "Privacy and Security" settings. This will enable just this app, and does not leave you vulnerable to malicious software.
