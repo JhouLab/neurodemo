@@ -1,18 +1,9 @@
-# -*- coding: utf-8 -*-
-"""
-Simple neuron simulator for Python.
-Also simulates voltage clamp and current clamp with access resistance.
-
-Luke Campagnola 2015
-"""
-
-# import sys, platform
 from collections import OrderedDict
 import numpy as np
 import scipy.integrate
 import neurodemo.units as NU
 import warnings
-# warnings.filterwarnings("error")
+
 
 class Sim(object):
     """Simulator for a collection of objects that derive from SimObject"""
@@ -177,6 +168,7 @@ class Sim(object):
 
 class MissingCurrentException(Exception):
     pass
+
 
 class SimState(object):
     """Contains the state of all diff. eq. variables in the simulation.
@@ -902,7 +894,10 @@ class IH(Channel):
 
 
 class LGNa(Channel):
-    """Cortical sodium channel (Lewis & Gerstner 2002, p.124)"""
+    """Cortical sodium channel: Ersir et al., 1999;
+       Jolivet, Lewis and Gerstner, 2004
+       For fast-spiking interneuron.
+    """
 
     type = "INa1"
 
@@ -952,7 +947,10 @@ class LGNa(Channel):
 
 
 class LGKfast(Channel):
-    """Cortical fast potassium channel (Lewis & Gerstner 2002, p.124)"""
+    """Cortical potassium channel (fast): Ersir et al., 1999;
+       Jolivet, Lewis and Gerstner, 2004
+       For fast-spiking interneuron.
+    """
 
     type = "IKf"
 
@@ -990,7 +988,10 @@ class LGKfast(Channel):
 
 
 class LGKslow(Channel):
-    """Cortical slow potassium channel (Lewis & Gerstner 2002, p.124)"""
+    """Cortical potassium channel (slow): Ersir et al., 1999;
+       Jolivet, Lewis and Gerstner, 2004
+       For fast-spiking interneuron.
+    """
 
     type = "IKs"
 
