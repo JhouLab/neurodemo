@@ -98,9 +98,12 @@ class DemoWindow(qt.QWidget):
         self.splitter = qt.QSplitter(qt.Qt.Orientation.Horizontal)
         self.layout.addWidget(self.splitter, 0, 0,1, 1)
         self.ptree = pt.ParameterTree(showHeader=False)
+        self.ptree.header().setSectionResizeMode(0, qt.QHeaderView.ResizeMode.Stretch)
+
         self.splitter.addWidget(self.ptree)
  
         self.ptree_stim = pt.ParameterTree(showHeader=False)
+        self.ptree_stim.header().setSectionResizeMode(0, qt.QHeaderView.ResizeMode.Stretch)
         self.splitter.addWidget(self.ptree_stim)
         
         self.plot_splitter = qt.QSplitter(qt.Qt.Orientation.Vertical)
@@ -283,10 +286,15 @@ class DemoWindow(qt.QWidget):
         }
         color = {'I': 'c', 'G': 'y', 'OP': 'g', 'V': 'w'}.get(name, 0.7)
         units = {'I': 'A', 'G': 'S', 'V': 'V', 'cmd': self.command_units()}
-        label = pname + ' ' + name
+        if name == 'V':
+            label = pname
+        else:
+            # Add unit to name, unless it is 'V', since we will add it again, and it looks weirdly pseudoredundant to see something like "Membrane Potential V (mV)"
+            label = pname + ' ' + name
+
         if name in units:
             label = (label, units[name])
-            
+
         # create new scrolling plot
         plt = ScrollingPlot(dt=self.dt, npts=int(self.scrolling_plot_duration / self.dt),
                             labels={'left': label}, pen=color)

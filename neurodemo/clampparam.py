@@ -218,6 +218,18 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
                 self.clamp.enabled = val
             elif param is self.child("Mode"):
                 self.set_mode(val)
+                if val == 'vc':
+                    # Turn off command by default, since membrane potential window is (mostly) redundant with it.
+                    self["Plot Command"] = False
+                    # In voltage-clamp mode, automatically turn on plotting of current.
+                    self["Plot Current"] = True
+                elif val == 'ic':
+                    # Plot command in IC is on by default, but need to toggle
+                    # to make sure existing graph axis label will update units
+                    self["Plot Command"] = False
+                    self["Plot Command"] = True
+                    # In current-clamp mode, turn off current plot to start
+                    self["Plot Current"] = False
             elif param is self.child("Holding"):
                 self.clamp.set_holding(self.mode(), val)
             elif param is self.child("Pipette Cap"):
