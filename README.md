@@ -33,47 +33,41 @@ Requirements
 Installation
 ------------
 
-The easiest way to run this is via the standalone executables I have already made (see bottom of this page).
+The easiest way to run this is via the standalone executables I already made (see bottom of this page). That requires no knowledge of Python or command line jargon.
 
-Other ways to install:
+Other ways to run from source code. All of these may require using the command line at least a little bit:
 
-1. Using Anaconda/miniconda:
+1. Using base Python:
+
+   This is my personal preference due to ease and simplicity. Install Python from www.python.org, then open a command prompt, and install dependencies:
+
+   > pip install numpy scipy PyQt6 pyqtgraph lmfit MetaArray
+
+   Download the neurodemo source code from https://github.com/campagnola/neurodemo or https://github.com/JhouLab/neurodemo and click the "Download ZIP" button on the right side of the page. Unzip the file to directory that is easily accessible to you, then open a command prompt, cd to that directory, and type:
+
+   > python -m neurodemo.py
+
+   This should run the program.
+
+2. Using Anaconda/miniconda:
     
-    a. Experienced Python users can install the requirements listed above, then download the neurodemo code and run `neurodemo.py`. For everybody else, I recommend installing the [Anaconda Python distribution] (http://continuum.io/downloads). Download and run the installation package for your platform. To keep the size down, you can instead install [miniconda] (http://conda.pydata.org/miniconda.html). When you run the installer, _take note of the location it is installing to_.
+    a. Python novices are often told to use Anaconda, but that is extreme overkill for this project, which only needs four of the 300+ packages that Anaconda comes bloated with. If you really want to go that route, download it here (http://www.anaconda.com), then install lmfit, pyqtgraph, and MetaArray, which Anaconda doesn't have by default:
 
-    b. If you installed miniconda, then it is necessary to manually install numpy, scipy, and pyqt6 (if you installed Anaconda, then these packages are already installed and you can skip this step, except for lmfit). This can be done from a terminal:
+    > conda install lmfit
 
-    ```
-    > conda install numpy scipy pyqt pyqtgraph lmfit
-    ```
+    c. Then install pyqtgraph and MetaArray:
 
-    c. Install pyqtgraph (this is required regardless of which python distribution you installed):
+    > pip install pyqtgraph MetaArray
 
-    ```
-    > pip install pyqtgraph
-    ```
-
-    d. Download the [neurodemo source code] (https://github.com/campagnola/neurodemo/archive/master.zip). You can find this by going to http://github.com/campagnola/neurodemo and clicking the "Download ZIP" button on the right side of the page. Unzip the file and you are ready to begin!
-
-2. To get the latest version that runs with Python 3.10 and PyQt6 you can follow these steps, depending on your system. Note that these all create and use Python virtual environments rather than conda/mminiconda environments.
-    
-    a. Windows
-    -  Git clone the repository.
-    - In the main directory, under the windows cmd terminal, run win_install.bat.
-    - Create a shortcut on the desktop to the file win_start_demo.bat, and set the "window" to minimized. 
-        Clicking on the shortcut should start the program. 
-    
-    b. macOS
-    - Git clone the repository.
-    - In the main directory, using a zsh or bash terminal, run ./make_local_env.sh. This should create the environment, install all the required packages, and leave you with the environment activated. 
-    -  type "python demo.py" to run the program. 
-    - To make an installable file (dmg), run the shell script that is appropriate for the processor: make_M1_dmg.sh or make_x86_64_dmg.sh. The resulting dmg file will be in the folder dist/demo_(architecture).dmg. You can then install the app as you would with any other dmg file.  
+    d. Finally, download the neurodemo source by going to http://github.com/campagnola/neurodemo and clicking the "Download ZIP" button on the right side of the page. Unzip the file to a convenient directory, and run from there.
 
 3. Create a single standalone executable file to distribute to others.
 
     - Git clone the repository. 
     - Create *and activate* a python virtual environment (venv) in the main repository directory and install all dependencies. Also, install pyinstaller:
     -     pip install pyinstaller
+    - Install Pillow, which is needed because the splash image size (1015x653 pixels) is bigger than max (760x480)
+    -     pip install Pillow
     - At the command line, cd to main repository directory, making sure the venv is active, then enter one of the following, based on whether you are on Windows or Mac:
     -     pyinstaller neurodemo_windows.spec
     -     pyinstaller neurodemo_mac.spec
