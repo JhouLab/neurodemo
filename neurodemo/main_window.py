@@ -114,6 +114,8 @@ class DemoWindow(qt.QWidget):
         
         self.clamp_param = ClampParameter(self.clamp, self)
         self.ptree_stim.setParameters(self.clamp_param)
+        self.ptree_stim.setStyleSheet("QTreeWidget::item { font-weight: bold; }")
+
         self.clamp_param.plots_changed.connect(self.plots_changed)
         self.clamp_param.mode_changed.connect(self.mode_changed)
 
@@ -205,9 +207,12 @@ class DemoWindow(qt.QWidget):
         for param, change, val in changes:
             path = self.params.childPath(param)
             if path[0] == "Run/Stop":
+                rsbutton = list(self.params.child("Run/Stop").items.keys())[0].button
                 if self.running() is True:
+                    rsbutton.setText("Run")
                     self.stop()
                 else:
+                    rsbutton.setText("Stop")
                     self.start()
             if change != 'value':
                 continue
@@ -273,6 +278,7 @@ class DemoWindow(qt.QWidget):
             plt = self.channel_plots[key]
             plt.setLabels(left=(plt.label_name, self.command_units()))
 
+            # Update units of sequence plot, which is a copy of the CMD plot
             plt2 = self.clamp_param.plot_win.plots[key]
             plt2.setLabels(left=(plt2.axes['left']['item'].labelText, self.command_units()))
 
@@ -290,10 +296,16 @@ class DemoWindow(qt.QWidget):
         }
         color = {'I': 'c', 'G': 'y', 'OP': 'g', 'V': 'w'}.get(name, 0.7)
         units = {'I': 'A', 'G': 'S', 'V': 'V', 'cmd': self.command_units()}
+
+        # Construct axis title from plot name (e.g. "Patch clamp"), value (e.g. I), and unit (e.g. nA).
+        # The final title might look like: "Patch clamp I (mA)"
+
         if name == 'V':
+            # If the unit is 'V', don't add it to the name. This is my (TJ's) personal pet peeve,
+            # as I prefer "Membrane Potential (mV)" to "Membrane Potential V (mV)" which looks both
+            # redundant and slightly wrong.
             label = pname
         else:
-            # Add unit to name, unless it is 'V', since we will add it again, and it looks weirdly pseudoredundant to see something like "Membrane Potential V (mV)"
             label = pname + ' ' + name
 
         if name in units:
@@ -380,6 +392,9 @@ class DemoWindow(qt.QWidget):
                plt: ScrollingPlot = self.channel_plots['soma.PatchClamp.cmd']
                dc: pg.PlotDataItem = plt.data_curve
                [x, y] = [dc.xData, dc.yData]
+               if x is None:
+                   # After switching between VC and IC, new graph has no data, just skip update
+                   return
                dx = x[1] - x[0]
                idx = int(t / dx)  # Note that t will be negative, since it represents time before present. This will make idx negative, so index will count from end
                if idx >= -len(y):

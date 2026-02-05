@@ -34,6 +34,7 @@ class TraceAnalyzer(qt.QWidget):
         self.params = TraceAnalyzerGroup(name="Analyzers")
         self.params.need_update.connect(self.update_analyzers)
         self.ptree.setParameters(self.params)
+        self.ptree.header().setSectionResizeMode(0, qt.QHeaderView.ResizeMode.Stretch)
 
     def clear(self):
         self.data = []
@@ -57,12 +58,24 @@ class TraceAnalyzer(qt.QWidget):
     def update_analysis(self):
         fields = ['cmd'] + [analyzer.name() for analyzer in self.params.children()]
         data = np.empty(len(self.data), dtype=[(str(f), float) for f in fields])
+        info = None
         for i, rec in enumerate(self.data):
             t, d, info = rec
             data['cmd'][i] = info['amp']
             for analysis in self.params.children():
                 data[analysis.name()][i] = analysis.process(t, d)
         self.table.setData(data)
+        tmp = self.analysis_plot
+
+        if info is not None:
+            # Tom Jhou: Temporary kluge so that CMD units are automatically correct.
+            # This will fail if user changes X-value to anything other than CMD.
+            # Should update to work more generally, by auto-detecting units
+            if info['mode'] == 'ic':
+                tmp.x_units_text.setText("A")
+            else:
+                tmp.x_units_text.setText("V")
+
         self.analysis_plot.update_data(data)
         
 
