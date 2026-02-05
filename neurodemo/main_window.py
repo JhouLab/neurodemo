@@ -146,7 +146,7 @@ class DemoWindow(qt.QWidget):
             dict(name="dt", type='float', value=20e-6, limits=[2e-6, 200e-6], suffix='s', siPrefix=True),
             dict(name="Method", type='list', value="solve_ivp", limits=['solve_ivp', 'odeint']),
             dict(name='Speed', type='float', value=self.runner.speed, limits=[0.001, 10], step=0.5, minStep=0.001, dec=True),
-            dict(name="Plot Duration", type='float', value=1.0, limits=[0.1, 10], suffix='s', siPrefix=True, step=0.2),
+            dict(name="Plot Duration", type='float', value=5.0, limits=[0.1, 20], suffix='s', siPrefix=True, step=0.2),
             dict(name='Temp', type='float', value=self.sim.temp, limits=[0., 41.], suffix='C', step=1.0),
             dict(name='Capacitance', type='float', value=self.neuron.cap, limits=[0.1e-12, 1000.e-12], suffix='F', siPrefix=True, dec=True, children=[
                 dict(name='Plot Current', type='bool', value=False),
@@ -269,8 +269,12 @@ class DemoWindow(qt.QWidget):
     def mode_changed(self):
         key = self.clamp.name + '.cmd'
         if key in self.channel_plots:
+            # Update units of CMD plot, which will be A for VC, and V for IC
             plt = self.channel_plots[key]
             plt.setLabels(left=(plt.label_name, self.command_units()))
+
+            plt2 = self.clamp_param.plot_win.plots[key]
+            plt2.setLabels(left=(plt2.axes['left']['item'].labelText, self.command_units()))
 
     def add_plot(self, key, pname, name) -> ScrollingPlot:
         # decide on y range, label, and units for new plot
@@ -329,7 +333,7 @@ class DemoWindow(qt.QWidget):
         sizes = [int(s * r) for s in sizes] + [int(size)]
         self.plot_splitter.setSizes(sizes)
 
-        # Ask sequence plotter to update as well
+        # Add the same plot to sequence plotter
         self.clamp_param.add_plot(key, label)
 
         # Track mouse over plot

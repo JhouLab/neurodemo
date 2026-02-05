@@ -73,6 +73,9 @@ class SequencePlotWindow(qt.QWidget):
                 sign = -1.0   # flip sign of cation currents for display
             plt_data = plt.plot(t, sign*data[k], pen=pen)
             self.plotted_data.append((plt_data, plt))
+
+            #
+            plt.setLimits(xMin=min(t), xMax=max(t))
         
         try:
             self.analyzer.add_data(t, data, info)
