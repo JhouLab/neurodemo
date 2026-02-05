@@ -219,9 +219,15 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
             elif param is self.child("Mode"):
                 self.set_mode(val)
                 if val == 'vc':
+                    # Toggle off and back on to reset scaling
+                    self["Plot Command"] = False
+                    self["Plot Command"] = True
                     # In voltage-clamp mode, current plot is on by default
                     self["Plot Current"] = True
                 elif val == 'ic':
+                    # Toggle to reset scaling
+                    self["Plot Command"] = False
+                    self["Plot Command"] = True
                     # In current-clamp mode, current plot is off by default
                     self["Plot Current"] = False
             elif param is self.child("Holding"):
