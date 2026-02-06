@@ -166,6 +166,8 @@ class DemoWindow(qt.QWidget):
         # Now that add_plot() sets x-axis limits, it must be called AFTER defining self.params,
         # rather than before, since it uses "Plot Duration" field in self.params.
         self.vm_plot = self.add_plot('soma.V', 'Membrane Potential', 'V')
+        self.set_scrolling_plot_duration(self.params['Plot Duration'])
+
         self.splitter.setSizes([300, 300, 800])
 
         self.ptree.setParameters(self.params)
