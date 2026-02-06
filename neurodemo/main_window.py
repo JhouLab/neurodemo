@@ -50,9 +50,6 @@ class DemoWindow(qt.QWidget):
             print(sys.platform, "running with mp")
             self.ndemo = self.proc._import('neurodemo')
 
-        self.scrolling_plot_duration = 1.0 * NU.s
-        self.result_buffer = ResultBuffer(max_duration=self.scrolling_plot_duration)
-
         self.dt = 20e-6 * NU.s
         self.integrator = 'solve_ivp'
         self.sim = self.ndemo.Sim(temp=6.3, dt=self.dt)
@@ -148,7 +145,7 @@ class DemoWindow(qt.QWidget):
             dict(name="dt", type='float', value=20e-6, limits=[2e-6, 200e-6], suffix='s', siPrefix=True),
             dict(name="Method", type='list', value="solve_ivp", limits=['solve_ivp', 'odeint']),
             dict(name='Speed', type='float', value=self.runner.speed, limits=[0.001, 10], step=0.5, minStep=0.001, dec=True),
-            dict(name="Plot Duration", type='float', value=5.0, limits=[0.1, 20], suffix='s', siPrefix=True, step=0.2),
+            dict(name="Plot Duration", type='float', value=2.0, limits=[0.1, 20], suffix='s', siPrefix=True, step=0.2),
             dict(name='Temp', type='float', value=self.sim.temp, limits=[0., 41.], suffix='C', step=1.0),
             dict(name='Capacitance', type='float', value=self.neuron.cap, limits=[0.1e-12, 1000.e-12], suffix='F', siPrefix=True, dec=True, children=[
                 dict(name='Plot Current', type='bool', value=False),
@@ -163,10 +160,13 @@ class DemoWindow(qt.QWidget):
 
         self.use_calculated_erev()
 
+        # These must be called after defining self.params
+        self.scrolling_plot_duration = self.params['Plot Duration'] * NU.s
+        self.result_buffer = ResultBuffer(max_duration=self.scrolling_plot_duration)
+
         # Now that add_plot() sets x-axis limits, it must be called AFTER defining self.params,
         # rather than before, since it uses "Plot Duration" field in self.params.
         self.vm_plot = self.add_plot('soma.V', 'Membrane Potential', 'V')
-        self.set_scrolling_plot_duration(self.params['Plot Duration'])
 
         self.splitter.setSizes([300, 300, 800])
 
@@ -314,14 +314,15 @@ class DemoWindow(qt.QWidget):
             label = (label, units[name])
 
         # create new scrolling plot
-        plt = ScrollingPlot(dt=self.dt, npts=int(self.scrolling_plot_duration / self.dt),
+        plt = ScrollingPlot(dt=self.dt, plot_duration_seconds=self.scrolling_plot_duration,
                             labels={'left': label}, pen=color)
         plt.label_name = label[0]
 
         if hasattr(self, 'vm_plot'):
             plt.setXLink(self.vm_plot)
-        else:
-            plt.setXRange(-self.scrolling_plot_duration, 0)
+
+        # Sets immediate visible range. User can scroll in or out, up to limits of the backing data
+        plt.setXRange(-self.scrolling_plot_duration, 0)
         yrange = yranges.get(name, (0, 1))
         if yrange is None:
             plt.enableAutoRange(y=True)
@@ -336,9 +337,6 @@ class DemoWindow(qt.QWidget):
         # register this plot for later..
         self.channel_plots[key] = plt
 
-        # Prevent user from zooming out beyond actual data time limits
-        plt.setLimits(xMin=-self.params['Plot Duration'], xMax=0)
-        
         # add new plot to splitter and resize all accordingly
         sizes = self.plot_splitter.sizes()
         self.plot_splitter.addWidget(plt)
@@ -644,26 +642,31 @@ class DemoWindow(qt.QWidget):
 
 
 class ScrollingPlot(pg.PlotWidget):
-    def __init__(self, dt, npts, pen='w', **kwds):
+    HISTORY_FACTOR = 2   # Store this many more points than visible, so we can scroll backward into recent history
+    def __init__(self, dt, plot_duration_seconds, pen='w', **kwds):
         pg.PlotWidget.__init__(self, **kwds)
         self.showGrid(True, True)
         self.data_curve = self.plot(pen=pen)
         self.data = np.array([], dtype=float)
-        self.npts = npts
         self.dt = dt
-        self.plot_duration = 1.0
-    
+        self.set_duration(plot_duration_seconds)
+
     def set_dt(self, dt):
         self.dt = dt
-        # update npts as well
-        self.npts=int(self.plot_duration / self.dt)
-        # print(self.plot_duration, self.npts, self.dt)
+        self.npts = self.get_npts()
+
+    def get_npts(self):
+        return int(self.plot_duration_seconds * self.HISTORY_FACTOR / self.dt)
 
     def set_duration(self, dur):
-        self.plot_duration = dur
-        self.npts=int(self.plot_duration / self.dt)
-        self.setXRange(-self.plot_duration, 0)
-        # print(self.plot_duration, self.npts, self.dt, len(self.data))
+        self.plot_duration_seconds = dur
+        self.npts = self.get_npts()
+
+        # Set immediate visible range of plot
+        self.setXRange(-self.plot_duration_seconds, 0)
+
+        # Set zoom limits, so user can't zoom out beyond limits of the backing data
+        self.setLimits(xMin=-self.plot_duration_seconds * self.HISTORY_FACTOR, xMax=0)
 
     def append(self, data):
         # print("len data, len self.data: ", len(data), len(self.data))
