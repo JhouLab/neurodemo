@@ -34,6 +34,7 @@ class TraceAnalyzer(qt.QWidget):
         self.params = TraceAnalyzerGroup(name="Analyzers")
         self.params.need_update.connect(self.update_analyzers)
         self.ptree.setParameters(self.params)
+        self.ptree.header().setSectionResizeMode(0, qt.QHeaderView.ResizeMode.Stretch)
 
     def clear(self):
         self.data = []
@@ -114,6 +115,9 @@ class TraceAnalyzerParameter(pt.parameterTypes.GroupParameter):
     
     def tree_changed(self, root, changes):
         for param, change, val in changes:
+            if change == 'parent' and val is None:
+                # Remove linear region item when analyzer is removed.
+                param.current_plot.removeItem(param.rgn)
             if change not in ('value', 'name'):
                 continue
             if param is self.child('Start') or param is self.child('End'):

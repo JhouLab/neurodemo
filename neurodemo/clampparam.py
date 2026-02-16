@@ -218,6 +218,18 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
                 self.clamp.enabled = val
             elif param is self.child("Mode"):
                 self.set_mode(val)
+                if val == 'vc':
+                    # Toggle off and back on to reset plot y-axis scaling
+                    self["Plot Command"] = False
+                    self["Plot Command"] = True
+                    # In voltage-clamp, current plot is ON by default
+                    self["Plot Current"] = True
+                elif val == 'ic':
+                    # Toggle off and back on to reset plot y-axis scaling
+                    self["Plot Command"] = False
+                    self["Plot Command"] = True
+                    # In current-clamp, current plot is OFF by default
+                    self["Plot Current"] = False
             elif param is self.child("Holding"):
                 self.clamp.set_holding(self.mode(), val)
             elif param is self.child("Pipette Cap"):
@@ -360,7 +372,6 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
         if not self.sim.running():
             # If not already running, then start a time-limited run
             self.sim.start(stop_after_cmd=True)
-
 
     def add_trigger(self, n, t, info):
         buf = np.empty(n, dtype=[(str(k), float) for k in self.plot_keys + ["t"]])

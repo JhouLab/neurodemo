@@ -50,9 +50,6 @@ class DemoWindow(qt.QWidget):
             print(sys.platform, "running with mp")
             self.ndemo = self.proc._import('neurodemo')
 
-        self.scrolling_plot_duration = 1.0 * NU.s
-        self.result_buffer = ResultBuffer(max_duration=self.scrolling_plot_duration)
-
         self.dt = 20e-6 * NU.s
         self.integrator = 'solve_ivp'
         self.sim = self.ndemo.Sim(temp=6.3, dt=self.dt)
@@ -98,9 +95,12 @@ class DemoWindow(qt.QWidget):
         self.splitter = qt.QSplitter(qt.Qt.Orientation.Horizontal)
         self.layout.addWidget(self.splitter, 0, 0,1, 1)
         self.ptree = pt.ParameterTree(showHeader=False)
+        self.ptree.header().setSectionResizeMode(0, qt.QHeaderView.ResizeMode.Stretch)   # This solves problem where parameter labels are truncated on some machines. Also allows user to resize all parts of the parameter tree.
+
         self.splitter.addWidget(self.ptree)
  
         self.ptree_stim = pt.ParameterTree(showHeader=False)
+        self.ptree_stim.header().setSectionResizeMode(0, qt.QHeaderView.ResizeMode.Stretch) # This solves problem where parameter labels are truncated on some machines. Also allows user to resize all parts of the parameter tree.
         self.splitter.addWidget(self.ptree_stim)
         
         self.plot_splitter = qt.QSplitter(qt.Qt.Orientation.Vertical)
@@ -111,6 +111,8 @@ class DemoWindow(qt.QWidget):
         
         self.clamp_param = ClampParameter(self.clamp, self)
         self.ptree_stim.setParameters(self.clamp_param)
+        self.ptree_stim.setStyleSheet("QTreeWidget::item { font-weight: bold; }")
+
         self.clamp_param.plots_changed.connect(self.plots_changed)
         self.clamp_param.mode_changed.connect(self.mode_changed)
 
@@ -143,7 +145,7 @@ class DemoWindow(qt.QWidget):
             dict(name="dt", type='float', value=20e-6, limits=[2e-6, 200e-6], suffix='s', siPrefix=True),
             dict(name="Method", type='list', value="solve_ivp", limits=['solve_ivp', 'odeint']),
             dict(name='Speed', type='float', value=self.runner.speed, limits=[0.001, 10], step=0.5, minStep=0.001, dec=True),
-            dict(name="Plot Duration", type='float', value=1.0, limits=[0.1, 10], suffix='s', siPrefix=True, step=0.2),
+            dict(name="Plot Duration", type='float', value=2.0, limits=[0.1, 20], suffix='s', siPrefix=True, step=0.2),
             dict(name='Temp', type='float', value=self.sim.temp, limits=[0., 41.], suffix='C', step=1.0),
             dict(name='Capacitance', type='float', value=self.neuron.cap, limits=[0.1e-12, 1000.e-12], suffix='F', siPrefix=True, dec=True, children=[
                 dict(name='Plot Current', type='bool', value=False),
@@ -158,9 +160,14 @@ class DemoWindow(qt.QWidget):
 
         self.use_calculated_erev()
 
+        # These must be called after defining self.params
+        self.scrolling_plot_duration = self.params['Plot Duration'] * NU.s
+        self.result_buffer = ResultBuffer(max_duration=self.scrolling_plot_duration)
+
         # Now that add_plot() sets x-axis limits, it must be called AFTER defining self.params,
         # rather than before, since it uses "Plot Duration" field in self.params.
         self.vm_plot = self.add_plot('soma.V', 'Membrane Potential', 'V')
+
         self.splitter.setSizes([300, 300, 800])
 
         self.ptree.setParameters(self.params)
@@ -202,9 +209,12 @@ class DemoWindow(qt.QWidget):
         for param, change, val in changes:
             path = self.params.childPath(param)
             if path[0] == "Run/Stop":
+                rsbutton = list(self.params.child("Run/Stop").items.keys())[0].button
                 if self.running() is True:
+                    rsbutton.setText("Run")
                     self.stop()
                 else:
+                    rsbutton.setText("Stop")
                     self.start()
             if change != 'value':
                 continue
@@ -266,8 +276,13 @@ class DemoWindow(qt.QWidget):
     def mode_changed(self):
         key = self.clamp.name + '.cmd'
         if key in self.channel_plots:
+            # Update units of CMD plot, which will be A for VC, and V for IC
             plt = self.channel_plots[key]
             plt.setLabels(left=(plt.label_name, self.command_units()))
+
+            # Update y-axis units of sequencer CMD plot, to match main CMD plot.
+            plt2 = self.clamp_param.plot_win.plots[key]
+            plt2.setLabels(left=(plt2.axes['left']['item'].labelText, self.command_units()))
 
     def add_plot(self, key, pname, name) -> ScrollingPlot:
         # decide on y range, label, and units for new plot
@@ -283,19 +298,32 @@ class DemoWindow(qt.QWidget):
         }
         color = {'I': 'c', 'G': 'y', 'OP': 'g', 'V': 'w'}.get(name, 0.7)
         units = {'I': 'A', 'G': 'S', 'V': 'V', 'cmd': self.command_units()}
-        label = pname + ' ' + name
+
+        # Construct axis title from plot name (e.g. "Patch clamp"), value (e.g. I), and unit (e.g. nA).
+        # The final title might look like: "Patch clamp I (mA)"
+
+        if name == 'V':
+            # If the unit is 'V', don't add it to the name. This is my (TJ's) personal pet peeve, as
+            # otherwise the axis says "Membrane Potential V (mV)" which looks both
+            # redundant and slightly self-contradictory. This fix changes y-axis label to:
+            # "Membrane Potential (mV)", which is simpler and clearer. 
+            label = pname
+        else:
+            label = pname + ' ' + name
+
         if name in units:
             label = (label, units[name])
-            
+
         # create new scrolling plot
-        plt = ScrollingPlot(dt=self.dt, npts=int(self.scrolling_plot_duration / self.dt),
+        plt = ScrollingPlot(dt=self.dt, plot_duration_seconds=self.scrolling_plot_duration,
                             labels={'left': label}, pen=color)
         plt.label_name = label[0]
 
         if hasattr(self, 'vm_plot'):
             plt.setXLink(self.vm_plot)
-        else:
-            plt.setXRange(-self.scrolling_plot_duration, 0)
+
+        # Sets immediate visible range. User can scroll in or out, up to limits of the backing data
+        plt.setXRange(-self.scrolling_plot_duration, 0)
         yrange = yranges.get(name, (0, 1))
         if yrange is None:
             plt.enableAutoRange(y=True)
@@ -310,9 +338,6 @@ class DemoWindow(qt.QWidget):
         # register this plot for later..
         self.channel_plots[key] = plt
 
-        # Prevent user from zooming out beyond actual data time limits
-        plt.setLimits(xMin=-self.params['Plot Duration'], xMax=0)
-        
         # add new plot to splitter and resize all accordingly
         sizes = self.plot_splitter.sizes()
         self.plot_splitter.addWidget(plt)
@@ -321,7 +346,7 @@ class DemoWindow(qt.QWidget):
         sizes = [int(s * r) for s in sizes] + [int(size)]
         self.plot_splitter.setSizes(sizes)
 
-        # Ask sequence plotter to update as well
+        # Add the same plot to sequence plotter
         self.clamp_param.add_plot(key, label)
 
         # Track mouse over plot
@@ -368,6 +393,9 @@ class DemoWindow(qt.QWidget):
                plt: ScrollingPlot = self.channel_plots['soma.PatchClamp.cmd']
                dc: pg.PlotDataItem = plt.data_curve
                [x, y] = [dc.xData, dc.yData]
+               if x is None:
+                   # After switching between VC and IC, new graph has no data, just skip update
+                   return
                dx = x[1] - x[0]
                idx = int(t / dx)  # Note that t will be negative, since it represents time before present. This will make idx negative, so index will count from end
                if idx >= -len(y):
@@ -447,12 +475,28 @@ class DemoWindow(qt.QWidget):
         for k, plt in self.channel_plots.items():
             if k not in result:
                 continue
-            if isinstance(result[k], float):
-                plt.append(result[k])
+
+            if result.is_item_callable(k):
+                # For key = soma.PatchClamp.cmd, result[key] calls a method. If accessed multiple
+                # times (during multiple graph updates), side effects like pop()-ing command samples
+                # will cause later graphs to lose cmd waveforms. Hence, we cache the value to avoid
+                # having to call the method again.
+                result.dep_vars[k] = result[k]
+            tmp = result[k]
+
+            if k in ["soma.IK.I", "soma.IKf.I", "soma.IKs.I", "soma.INa.I",
+                "soma.IH.I", "soma.INa1.I"]:
+                tmp *= -1.0   # flip sign of cationic currents for display. This replaces code that used to be in sequenceplot.py, line 70
+
+            if isinstance(tmp, float):
+                plt.append(tmp)
             else:
-                plt.append(result[k][1:])
+                # Update scrolling plots
+                print(f"  Appending {k}: ", end="")
+                plt.append(tmp[1:])
             
-        # Let the clamp decide which triggered regions of the data to extract
+        # Send waveform to sequence plot windows, and
+        # let them decide which triggered regions of the data to extract
         # for pulse plots
         self.clamp_param.new_result(result)
 
@@ -464,7 +508,7 @@ class DemoWindow(qt.QWidget):
                 # Stop after command queue and trigger queue are BOTH empty
                 self.runner.stop()
         
-        # update the schematic
+        # update the schematic (neuron cartoon animation)
         self.neuronview.update_state(result.get_final_state())
 
         # store a running buffer of results
@@ -615,26 +659,31 @@ class DemoWindow(qt.QWidget):
 
 
 class ScrollingPlot(pg.PlotWidget):
-    def __init__(self, dt, npts, pen='w', **kwds):
+    HISTORY_FACTOR = 2   # Store this many more points than visible, so we can scroll backward into recent history
+    def __init__(self, dt, plot_duration_seconds, pen='w', **kwds):
         pg.PlotWidget.__init__(self, **kwds)
         self.showGrid(True, True)
         self.data_curve = self.plot(pen=pen)
         self.data = np.array([], dtype=float)
-        self.npts = npts
         self.dt = dt
-        self.plot_duration = 1.0
-    
+        self.set_duration(plot_duration_seconds)
+
     def set_dt(self, dt):
         self.dt = dt
-        # update npts as well
-        self.npts=int(self.plot_duration / self.dt)
-        # print(self.plot_duration, self.npts, self.dt)
+        self.npts = self.get_npts()
+
+    def get_npts(self):
+        return int(self.plot_duration_seconds * self.HISTORY_FACTOR / self.dt)
 
     def set_duration(self, dur):
-        self.plot_duration = dur
-        self.npts=int(self.plot_duration / self.dt)
-        self.setXRange(-self.plot_duration, 0)
-        # print(self.plot_duration, self.npts, self.dt, len(self.data))
+        self.plot_duration_seconds = dur
+        self.npts = self.get_npts()
+
+        # Set immediate visible range of plot
+        self.setXRange(-self.plot_duration_seconds, 0)
+
+        # Set zoom limits, so user can't zoom out beyond limits of the backing data
+        self.setLimits(xMin=-self.plot_duration_seconds * self.HISTORY_FACTOR, xMax=0)
 
     def append(self, data):
         # print("len data, len self.data: ", len(data), len(self.data))
@@ -643,7 +692,7 @@ class ScrollingPlot(pg.PlotWidget):
             self.data = self.data[-self.npts:]
         t = np.arange(len(self.data)) * self.dt
         t -= t[-1]
-        # print("appending npts: ", len(self.data), self.npts, self.dt, self.plot_duration)
+        print(f"\tadding {len(data)} points, total data length {len(self.data)}, avg value {np.mean(data)}")  #, self.dt, self.plot_duration)
         self.data_curve.setData(t, self.data)
 
 
