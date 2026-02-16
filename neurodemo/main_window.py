@@ -280,7 +280,7 @@ class DemoWindow(qt.QWidget):
             plt = self.channel_plots[key]
             plt.setLabels(left=(plt.label_name, self.command_units()))
 
-            # Update units of sequence plot, which is a copy of the CMD plot
+            # Update units of sequence plot, to match main CMD plot which was fixed earlier.
             plt2 = self.clamp_param.plot_win.plots[key]
             plt2.setLabels(left=(plt2.axes['left']['item'].labelText, self.command_units()))
 
@@ -305,7 +305,7 @@ class DemoWindow(qt.QWidget):
         if name == 'V':
             # If the unit is 'V', don't add it to the name. This is my (TJ's) personal pet peeve,
             # as I prefer "Membrane Potential (mV)" to "Membrane Potential V (mV)" which looks both
-            # redundant and slightly wrong.
+            # redundant and slightly self-contradictory.
             label = pname
         else:
             label = pname + ' ' + name
@@ -474,12 +474,28 @@ class DemoWindow(qt.QWidget):
         for k, plt in self.channel_plots.items():
             if k not in result:
                 continue
-            if isinstance(result[k], float):
-                plt.append(result[k])
+
+            if result.is_item_callable(k):
+                # For key = soma.PatchClamp.cmd, result[key] calls a method. If accessed multiple
+                # times (during multiple graph updates), side effects like pop()-ing command samples
+                # will cause later graphs to lose cmd waveforms. Hence, we cache the value to avoid
+                # having to call the method again.
+                result.dep_vars[k] = result[k]
+            tmp = result[k]
+
+            if k in ["soma.IK.I", "soma.IKf.I", "soma.IKs.I", "soma.INa.I",
+                "soma.IH.I", "soma.INa1.I"]:
+                tmp *= -1.0   # flip sign of cationic currents for display. This replaces code that used to be in sequenceplot.py, line 70
+
+            if isinstance(tmp, float):
+                plt.append(tmp)
             else:
-                plt.append(result[k][1:])
+                # Update scrolling plots
+                print(f"  Appending {k}: ", end="")
+                plt.append(tmp[1:])
             
-        # Let the clamp decide which triggered regions of the data to extract
+        # Send waveform to sequence plot windows, and
+        # let them decide which triggered regions of the data to extract
         # for pulse plots
         self.clamp_param.new_result(result)
 
@@ -491,7 +507,7 @@ class DemoWindow(qt.QWidget):
                 # Stop after command queue and trigger queue are BOTH empty
                 self.runner.stop()
         
-        # update the schematic
+        # update the schematic (neuron cartoon animation)
         self.neuronview.update_state(result.get_final_state())
 
         # store a running buffer of results
@@ -675,7 +691,7 @@ class ScrollingPlot(pg.PlotWidget):
             self.data = self.data[-self.npts:]
         t = np.arange(len(self.data)) * self.dt
         t -= t[-1]
-        # print("appending npts: ", len(self.data), self.npts, self.dt, self.plot_duration)
+        print(f"\tadding {len(data)} points, total data length {len(self.data)}, avg value {np.mean(data)}")  #, self.dt, self.plot_duration)
         self.data_curve.setData(t, self.data)
 
 

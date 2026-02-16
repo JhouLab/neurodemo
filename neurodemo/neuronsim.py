@@ -213,12 +213,29 @@ class SimState(object):
             return self.state[self.indexes[key]]
         except KeyError:
             if key in self.dep_vars:
-                return self.dep_vars[key](self)
+                if callable(self.dep_vars[key]):
+                    # CMD result is a function
+                    return self.dep_vars[key](self)
+                else:
+                    # We come here if we have replaced method with its cached results.
+                    # Currently this only applies to key=soma.PatchClamp.cmd, which previously called get_cmd_from_state()
+                    # but now retrieves cached value
+                    return self.dep_vars[key]
             elif key in self.extra.keys():
                 # Key is usually 't' here
                 return self.extra[key]
             else:
                 raise MissingCurrentException
+
+    def is_item_callable(self, key):
+        if isinstance(key, slice):
+            return False
+        # allow lookup by (object, var)
+        if isinstance(key, tuple):
+            key = key[0].name + "." + key[1]
+        if key in self.indexes:
+            return False
+        return (key in self.dep_vars) and (callable(self.dep_vars[key]))
 
     def keys(self):
         return list(self.indexes.keys()) + list(self.dep_vars.keys()) + list(self.extra.keys())
@@ -273,6 +290,10 @@ class SimState(object):
         kwds = {'difeq_state': self.state[:, sl]}
         for k,v in self.extra.items():
             kwds[k] = v[sl]
+        for k,v in self.dep_vars.items():
+            if not callable(v):
+                # This is the CMD waveform, which used to be a bound method that was then converted to real values
+                self.dep_vars[k] = v[sl]
         return self.copy(**kwds)
 
     def copy(self, **kwds):
@@ -545,9 +566,10 @@ class PatchClamp(Mechanism):
 
     def __init__(self, mode="ic", ra=0.1 * NU.MOhm, cpip=0.5e-12 * NU.F, **kwds):
         self.ra = ra
-        self.cpip = cpip
+        self.cpip = cpip    # Pipette capacitance
         self._mode = mode
         self.cmd_queue = []
+        self.cmd_queue2 = []  # Copy of queue, since we need it for generating plot graphs
         self.cmd = []
         self.last_time = 0.0
         self.holding = {"ic": 0.0 * NU.pA, "vc": -65 * NU.mV}
@@ -579,6 +601,7 @@ class PatchClamp(Mechanism):
                 )
 
         self.cmd_queue.append((start, dt, cmd))
+        self.cmd_queue2.append((start, dt, cmd))
         return start
 
     def queue_commands(self, cmds, dt):
@@ -591,6 +614,7 @@ class PatchClamp(Mechanism):
 
     def clear_queue(self):
         self.cmd_queue = []
+        self.cmd_queue2 = []
 
     def set_mode(self, mode):
         self._mode = mode
@@ -608,6 +632,9 @@ class PatchClamp(Mechanism):
         return (ve - vm) / self.ra
 
     def derivatives(self, state):
+        # This is called from differential equation solver. It could potentially
+        # consume command chunks (i.e. they will be "popped" and gone forever)
+        # even though we still need the command to generate plots.
         t = state["t"]
         self.last_time = t
         ## Select between VC and CC
@@ -618,24 +645,36 @@ class PatchClamp(Mechanism):
             ve = state[self, "V"]
             cmd = (cmd - ve) * self.gain
 
+        if cmd > 0:
+            # For troubleshooting problem when run length > command duration
+            pass
+
         # Compute change in electrode potential
-        dve = (cmd - self.current(state)) / self.cpip
+        dve = (cmd - self.current(state)) / self.cpip    # Pipette capacitance determines dV/dt as function of cmd I. (Does this fail in VC?)
         return [dve]
 
     def get_cmd_from_state(self, state):
+        # This is called after solving differential equations, and used to generate plots.
+        # So we read from second copy of command queue, since the first one is not guaranteed
+        # to have all the chunks.
         if isinstance(state['t'], np.ndarray):
-            return [self.get_cmd(t) for t in state['t']]            
+            # Retrieve command for one plot time chunk, typically 20ms, times plot speed.
+            return [self.get_cmd(t, use_copy=True) for t in state['t']]
         else:
-            return self.get_cmd(state['t'])
+            return self.get_cmd(state['t'], use_copy=True)
 
-    def get_cmd(self, t: float):
+    def get_cmd(self, t: float, use_copy=False):
         """Return command value at time *t*.
 
         Values are interpolated linearly between command points.
         """
         hold = self.holding[self.mode]
-        while len(self.cmd_queue) > 0:
-            (start, dt, data) = self.cmd_queue[0]
+        if use_copy:
+            q = self.cmd_queue2
+        else:
+            q = self.cmd_queue
+        while len(q) > 0:
+            (start, dt, data) = q[0]
             i1 = int(np.floor((t - start) / dt))
             # if i1 >= 0:
             #     print(f"I!********************* {i1:8d}, {t:.4f}, {start:.3f}, {len(data):6f}")
@@ -652,7 +691,7 @@ class PatchClamp(Mechanism):
                 break
             elif i1 >= len(data):
                 # this command has expired; remove and try next command
-                self.cmd_queue.pop(0)  # NOTE: this does not work with some integration algorithms.
+                q.pop(0)  # NOTE: this does not work with some integration algorithms.
                 continue
             else:
                 v1 = data[i1]
@@ -663,17 +702,17 @@ class PatchClamp(Mechanism):
                     vt2 = vt1 + dt
                     break
                 else:
-                    if len(self.cmd_queue) > 1 and vt1 + dt >= self.cmd_queue[1][0]:
+                    if len(q) > 1 and vt1 + dt >= q[1][0]:
                         # interpolate from command to next command array
-                        v2 = self.cmd_queue[1][2][0]
-                        vt2 = self.cmd_queue[1][0]
+                        v2 = q[1][2][0]
+                        vt2 = q[1][0]
                     else:
                         # interpolate from command back to holding
                         v2 = hold
                         vt2 = vt1 + dt
                     break
 
-        if len(self.cmd_queue) == 0:
+        if len(q) == 0:
             return hold
 
         s = (t - vt1) / (vt2 - vt1)

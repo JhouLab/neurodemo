@@ -67,11 +67,7 @@ class SequencePlotWindow(qt.QWidget):
             pen = (info['seq_ind'], info['seq_len'] * 4./3.)
         
         for k, plt in self.plots.items():
-            sign = 1.0
-            if k in ["soma.IK.I", "soma.IKf.I", "soma.IKs.I", "soma.INa.I",
-                "soma.IH.I", "soma.INa1.I"]:
-                sign = -1.0   # flip sign of cation currents for display
-            plt_data = plt.plot(t, sign*data[k], pen=pen)
+            plt_data = plt.plot(t, data[k], pen=pen)  # Sign flip for cationic currents is now performed in main_window.py
             self.plotted_data.append((plt_data, plt))
 
             #
