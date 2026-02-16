@@ -488,11 +488,10 @@ class DemoWindow(qt.QWidget):
                 "soma.IH.I", "soma.INa1.I"]:
                 tmp *= -1.0   # flip sign of cationic currents for display. This replaces code that used to be in sequenceplot.py, line 70
 
+            # Update scrolling plots
             if isinstance(tmp, float):
                 plt.append(tmp)
             else:
-                # Update scrolling plots
-                print(f"  Appending {k}: ", end="")
                 plt.append(tmp[1:])
             
         # Send waveform to sequence plot windows, and
@@ -692,7 +691,6 @@ class ScrollingPlot(pg.PlotWidget):
             self.data = self.data[-self.npts:]
         t = np.arange(len(self.data)) * self.dt
         t -= t[-1]
-        print(f"\tadding {len(data)} points, total data length {len(self.data)}, avg value {np.mean(data)}")  #, self.dt, self.plot_duration)
         self.data_curve.setData(t, self.data)
 
 
