@@ -228,6 +228,10 @@ class SimState(object):
                 raise MissingCurrentException
 
     def is_item_callable(self, key):
+        # This returns true if variable is callable function, and false otherwise
+        # This is useful for the cmd variable, which during plotting is initially a
+        # call to get_cmd(), and is ultimately replaced by cached result values to
+        # avoid side effects from multiple calls to get_cmd()
         if isinstance(key, slice):
             return False
         # allow lookup by (object, var)
@@ -632,9 +636,6 @@ class PatchClamp(Mechanism):
         return (ve - vm) / self.ra
 
     def derivatives(self, state):
-        # This is called from differential equation solver. It could potentially
-        # consume command chunks (i.e. they will be "popped" and gone forever)
-        # even though we still need the command to generate plots.
         t = state["t"]
         self.last_time = t
         ## Select between VC and CC
@@ -645,18 +646,15 @@ class PatchClamp(Mechanism):
             ve = state[self, "V"]
             cmd = (cmd - ve) * self.gain
 
-        if cmd > 0:
-            # For troubleshooting problem when run length > command duration
-            pass
-
         # Compute change in electrode potential
         dve = (cmd - self.current(state)) / self.cpip    # Pipette capacitance determines dV/dt as function of cmd I. (Does this fail in VC?)
         return [dve]
 
     def get_cmd_from_state(self, state):
-        # This is called after solving differential equations, and used to generate plots.
-        # So we read from second copy of command queue, since the first one is not guaranteed
-        # to have all the chunks.
+        # This is called by plotting code after differential equation solver is fully done.
+        # Because the equation solver might have consumed one or more buffers if pulse length
+        # exceeds buffer length, we set use_copy to True, thus using a fresh copy of
+        # command queue that has not been consumed yet.
         if isinstance(state['t'], np.ndarray):
             # Retrieve command for one plot time chunk, typically 20ms, times plot speed.
             return [self.get_cmd(t, use_copy=True) for t in state['t']]

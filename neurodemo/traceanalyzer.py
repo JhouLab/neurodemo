@@ -116,7 +116,7 @@ class TraceAnalyzerParameter(pt.parameterTypes.GroupParameter):
     def tree_changed(self, root, changes):
         for param, change, val in changes:
             if change == 'parent' and val is None:
-                # Remove linear region item when analyzer is removed.
+                # Remove linear region item (i.e. pair of cursors) when corresponding analyzer is removed.
                 param.current_plot.removeItem(param.rgn)
             if change not in ('value', 'name'):
                 continue

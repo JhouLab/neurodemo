@@ -494,7 +494,7 @@ class DemoWindow(qt.QWidget):
             else:
                 plt.append(tmp[1:])
             
-        # Send waveform to sequence plot windows, and
+        # Send waveforms to sequence plot windows, and
         # let them decide which triggered regions of the data to extract
         # for pulse plots
         self.clamp_param.new_result(result)
@@ -502,12 +502,12 @@ class DemoWindow(qt.QWidget):
         self.params['Elapsed'] = result['t'][-1]
 
         if self.runner.stop_after_cmd:
-            # We have elected to stop after command (either single pulse or sequence) is done
+            # If we have elected to stop after command (either single pulse or sequence) is done
             if len(self.clamp_param.triggers) == 0 and self.runner.sim.cmd_done():
                 # Stop after command queue and trigger queue are BOTH empty
                 self.runner.stop()
         
-        # update the schematic (neuron cartoon animation)
+        # update the schematic (i.e. the neuron cartoon animation)
         self.neuronview.update_state(result.get_final_state())
 
         # store a running buffer of results
