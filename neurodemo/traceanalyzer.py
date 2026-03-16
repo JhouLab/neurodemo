@@ -111,11 +111,10 @@ class TraceAnalyzerGroup(pt.parameterTypes.GroupParameter):
 
         an: EvalPlotter = self.plotter.analyzer.analysis_plot
 
-        # If either y1 or y2 are blank, then populate it with newly added analyzer
+        # If y1 is blank, populate it with newly added analyzer. We don't do this for y2, as this sometimes leads
+        # to overlappoing plots with different (and incompatible) units
         if str(an.y1_code.text()).lower() == '':
             an.y1_code.setText(param.name())
-        elif str(an.y2_code.text()).lower() == '':
-            an.y2_code.setText(param.name())
 
         param.need_update.connect(self.need_update)
         self.need_update.emit()
@@ -173,7 +172,7 @@ class TraceAnalyzerParameter(pt.parameterTypes.GroupParameter):
             elif param is self.child('Type'):
                 self.show_threshold_param()
             elif param is self and change == 'name':
-                self.rgn_label.setFormat(self.name())
+                self.rgn_label.setFormat(self.name())  # Note use of setFormat() rather than setText(), which works temporarily but then reverts to original name.
             self.need_update.emit(self)
 
     def show_threshold_param(self):
@@ -417,12 +416,9 @@ class EvalPlotter(qt.QWidget):
         xcode = str(self.x_code.text()).lower()  # Read user input text for X-axis values
         y1_code = str(self.y1_code.text()).lower()  # Read user input text for Y-axis values
         y2code = str(self.y2_code.text()).lower()  # Read user input text for Y-axis values
-        if xcode == '':
-            # No x values, can't plot
-            return
-
-        if y1_code == '' and y2code == '':
-            # No y values, can't plot
+        if xcode == '' or (y1_code == '' and y2code == ''):
+            # Can't plot unless we have x-values and at least one y
+            self.plot.clear()
             return
 
         try:

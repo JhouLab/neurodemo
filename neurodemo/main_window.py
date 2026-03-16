@@ -95,12 +95,12 @@ class DemoWindow(qt.QWidget):
         self.splitter = qt.QSplitter(qt.Qt.Orientation.Horizontal)
         self.layout.addWidget(self.splitter, 0, 0,1, 1)
         self.ptree = pt.ParameterTree(showHeader=False)
-        self.ptree.header().setSectionResizeMode(0, qt.QHeaderView.ResizeMode.Stretch)   # This solves problem where parameter labels are truncated on some machines. Also allows user to resize all parts of the parameter tree.
+        self.ptree.header().setSectionResizeMode(0, qt.QHeaderView.ResizeMode.Stretch)   # Stretch mode fixes truncated parameter labels occurring on some Windows machines.
 
         self.splitter.addWidget(self.ptree)
  
         self.ptree_stim = pt.ParameterTree(showHeader=False)
-        self.ptree_stim.header().setSectionResizeMode(0, qt.QHeaderView.ResizeMode.Stretch) # This solves problem where parameter labels are truncated on some machines. Also allows user to resize all parts of the parameter tree.
+        self.ptree_stim.header().setSectionResizeMode(0, qt.QHeaderView.ResizeMode.Stretch) # Stretch mode fixes truncated parameter labels occurring on some Windows machines.
         self.splitter.addWidget(self.ptree_stim)
         
         self.plot_splitter = qt.QSplitter(qt.Qt.Orientation.Vertical)
@@ -167,7 +167,6 @@ class DemoWindow(qt.QWidget):
         # Now that add_plot() sets x-axis limits, it must be called AFTER defining self.params,
         # rather than before, since it uses "Plot Duration" field in self.params.
         self.vm_plot = self.add_plot('soma.V', 'Membrane Potential', 'V')
-
         self.splitter.setSizes([300, 300, 800])
 
         self.ptree.setParameters(self.params)
@@ -211,9 +210,11 @@ class DemoWindow(qt.QWidget):
             if path[0] == "Run/Stop":
                 rsbutton = list(self.params.child("Run/Stop").items.keys())[0].button
                 if self.running() is True:
+                    # If currently running, then stop the session, and button indicates that pushing it will restart.
                     rsbutton.setText("Run")
                     self.stop()
                 else:
+                    # If currently stopped, then start session, and button indicates that pushing it will stop.
                     rsbutton.setText("Stop")
                     self.start()
             if change != 'value':
@@ -301,11 +302,10 @@ class DemoWindow(qt.QWidget):
 
         # Construct axis title from plot name (e.g. "Patch clamp"), value (e.g. I), and unit (e.g. nA).
         # The final title might look like: "Patch clamp I (mA)"
-
         if name == 'V':
-            # If the unit is 'V', don't add it to the name. This is my (TJ's) personal pet peeve, as
-            # otherwise the axis says "Membrane Potential V (mV)" which looks both redundant and
-            # self-contradictory. Instead, use "Membrane Potential (mV)", which is simpler and clearer.
+            # If unit is 'V', don't add it to name. This is my (TJ's) pet peeve, as otherwise axis says
+            # "Membrane Potential V (mV)" which looks redundant and self-contradictory. Instead, use
+            # "Membrane Potential (mV)", which is simpler and clearer.
             label = pname
         else:
             label = pname + ' ' + name
@@ -474,15 +474,10 @@ class DemoWindow(qt.QWidget):
         for k, plt in self.channel_plots.items():
             if k not in result:
                 continue
-
             if k.endswith('cmd'):
-                # For key = soma.PatchClamp.cmd, result[key] calls a method. If accessed multiple
-                # times (during multiple graph updates), samples may be "consumed" and lost after
-                # the first pass. Hence, we cache the value to avoid having to call the method again.
+                # If key = soma.PatchClamp.cmd, cache the return value to avoid having to call the method again, which will fail if cmd is longer than buffer.
                 result.dep_vars[k] = result[k]
-
             vals = result[k]
-
             # Update scrolling plots
             if isinstance(vals, float):
                 plt.append(vals)   # Is this needed?
@@ -651,7 +646,7 @@ class DemoWindow(qt.QWidget):
 
 
 class ScrollingPlot(pg.PlotWidget):
-    HISTORY_FACTOR = 2   # Store this many more points than visible, so we can scroll backward into recent history
+    HISTORY_FACTOR = 2   # Store 2x more points than visible, so we can scroll backward further
     def __init__(self, dt, plot_duration_seconds, pen='w', **kwds):
         pg.PlotWidget.__init__(self, **kwds)
         self.showGrid(True, True)

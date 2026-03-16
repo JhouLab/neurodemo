@@ -206,7 +206,7 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
         self.child("Pulse", "Pulse Sequence").sigActivated.connect(self.pulse_sequence)
         self.child("Pulse", "Clear Pulses").sigActivated.connect(self.clear_triggers)
 
-        self.plot_win.analyzer.analysis_plot.update_unit_inference(mode_string=self.mode())
+        self.plot_win.analyzer.analysis_plot.update_unit_inference(mode_string=self.mode()) # Analyzer needs to know whether we are in VC or IC, so it can auto-set plot units
 
     def set_dt(self, dt):
         self.dt = dt
@@ -220,18 +220,18 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
                 self.clamp.enabled = val
             elif param is self.child("Mode"):
                 self.set_mode(val)
-                # Analyzer objects get vc/ic mode info to auto-set y-axis units and Input selection
+                # Send mode (vc/ic) to analyzer objects, so they can auto-set y-axis units and Input selection
                 self.plot_win.analyzer.analysis_plot.update_unit_inference(mode_string=self.mode())
                 self.plot_win.analyzer.params.set_mode(mode_string=self.mode())
                 # Update cmd units on plot y-axes
                 if val == 'vc':
-                    # Toggle off and back on to reset plot y-axis scaling
+                    # Toggle plot off and on to set correct y-axis scale and units
                     self["Plot Command"] = False
                     self["Plot Command"] = True
                     # In voltage-clamp, current plot is ON by default
                     self["Plot Current"] = True
                 elif val == 'ic':
-                    # Toggle off and back on to reset plot y-axis scaling
+                    # Toggle plot off and on to set correct y-axis scale and units
                     self["Plot Command"] = False
                     self["Plot Command"] = True
                     # In current-clamp, current plot is OFF by default
@@ -419,7 +419,7 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
 
         # store a few recent results to ensure triggers are handled on time
         if not overflow:
-            self.result_buffer.append(result)  # add the result to the end of the buffer list
+            self.result_buffer.append(result)  # add result to end of buffer list, but only if samples are NOT overflow from previous new_result() call, as that would cause samples to process twice, out of order.
             if len(self.result_buffer) > self.result_buffer_size:
                 # find the OLDEST time in the buffer, pop it off queue, and return it
                 result = self.get_oldest_result()
@@ -433,7 +433,7 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
 
         time_arr = result["t"]
         TR = self.triggers[0] 
-        if TR.trigger_time > time_arr[-1]:  # Trigger is after end of the incoming data samples
+        if TR.trigger_time > time_arr[-1]:  # Trigger occurs after end of incoming samples. Can discard samples, since they will not end up in sequence plot.
             # print(f"*** Trigger detected at {TR.trigger_time:.4f} for time block: {time_arr[0]:.6f} - {time_arr[-1]:.6f}")
             # print(len(time_arr))
             return

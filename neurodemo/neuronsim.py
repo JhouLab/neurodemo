@@ -215,6 +215,7 @@ class SimState(object):
                    "soma.IH.I", "soma.INa1.I"]:
             # Cationic currents are plotted as negative, i.e. downward for inward
             # currents, and upward for outward currents, so multiply by negative one.
+            # Doing sign change here allows all graphs to change in tandem.
             if isinstance(result, list):
                 return [-1 * x for x in result]
             else:
@@ -232,29 +233,14 @@ class SimState(object):
                     # CMD result is a function
                     return self.dep_vars[key](self)
                 else:
-                    # We come here if we have replaced method with its cached results.
-                    # Currently this only applies to key=soma.PatchClamp.cmd, which previously called get_cmd_from_state()
-                    # but now retrieves cached value
+                    # For key=soma.PatchClamp.cmd, we replaced method with cached results. This avoids the problem where
+                    # cmd buffers are popped off queue on the first call, and hence unavailable the second time.
                     return self.dep_vars[key]
             elif key in self.extra.keys():
                 # Key is usually 't' here
                 return self.extra[key]
             else:
                 raise MissingCurrentException
-
-    def is_item_callable(self, key):
-        # This returns true if variable is callable function, and false otherwise
-        # This is useful for the cmd variable, which during plotting is initially a
-        # call to get_cmd(), and is ultimately replaced by cached result values to
-        # avoid side effects from multiple calls to get_cmd()
-        if isinstance(key, slice):
-            return False
-        # allow lookup by (object, var)
-        if isinstance(key, tuple):
-            key = key[0].name + "." + key[1]
-        if key in self.indexes:
-            return False
-        return (key in self.dep_vars) and (callable(self.dep_vars[key]))
 
     def keys(self):
         return list(self.indexes.keys()) + list(self.dep_vars.keys()) + list(self.extra.keys())
@@ -666,10 +652,9 @@ class PatchClamp(Mechanism):
         return [dve]
 
     def get_cmd_from_state(self, state):
-        # This is called by plotting code after differential equation solver is fully done.
-        # Because the equation solver might have consumed one or more buffers if pulse length
-        # exceeds buffer length, we set use_copy to True, thus using a fresh copy of
-        # command queue that has not been consumed yet.
+        # This is called by plotting code after differential equation solver is fully done. Because calls from equation solver
+        # might have popped some command buffers off the queue (if pulse length > buffer length), the queue might be partly depleted.
+        # Hence for plotting, we set use_copy=True, using a fresh copy of command queue that has not been consumed yet.
         if isinstance(state['t'], np.ndarray):
             # Retrieve command for one plot time chunk, typically 20ms, times plot speed.
             return [self.get_cmd(t, use_copy=True) for t in state['t']]
