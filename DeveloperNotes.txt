@@ -1,0 +1,12 @@
+
+Useful functions:
+
+
+pyqtgraph\functions.py
+    Line ??: siScale()           Calculates SI unit prefix
+pyqtgraph\GraphicsItems\PlotDataItems.py
+    Line 1325: PlotDataItem.updateItems()    Updates all plots, (line and scatter)
+
+
+neurodemo\traceanalyzer.py\EvalPlotter.replot()     Scatterplot of analyzer results
+
