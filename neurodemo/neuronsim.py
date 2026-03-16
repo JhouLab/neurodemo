@@ -208,6 +208,21 @@ class SimState(object):
         # allow lookup by (object, var)
         if isinstance(key, tuple):
             key = key[0].name + "." + key[1]
+
+        result = self.get_item_unsigned(key)
+
+        if key in ["soma.IK.I", "soma.IKf.I", "soma.IKs.I", "soma.INa.I",
+                   "soma.IH.I", "soma.INa1.I"]:
+            # Cationic currents are plotted as negative, i.e. downward for inward
+            # currents, and upward for outward currents, so multiply by negative one.
+            if isinstance(result, list):
+                return [-1 * x for x in result]
+            else:
+                return - result
+        else:
+            return result
+
+    def get_item_unsigned(self, key):
         try:
             # try this first for speed
             return self.state[self.indexes[key]]

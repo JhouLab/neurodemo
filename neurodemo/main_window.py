@@ -304,9 +304,8 @@ class DemoWindow(qt.QWidget):
 
         if name == 'V':
             # If the unit is 'V', don't add it to the name. This is my (TJ's) personal pet peeve, as
-            # otherwise the axis says "Membrane Potential V (mV)" which looks both
-            # redundant and slightly self-contradictory. This fix changes y-axis label to:
-            # "Membrane Potential (mV)", which is simpler and clearer. 
+            # otherwise the axis says "Membrane Potential V (mV)" which looks both redundant and
+            # self-contradictory. Instead, use "Membrane Potential (mV)", which is simpler and clearer.
             label = pname
         else:
             label = pname + ' ' + name
@@ -476,35 +475,29 @@ class DemoWindow(qt.QWidget):
             if k not in result:
                 continue
 
-            if result.is_item_callable(k):
+            if k.endswith('cmd'):
                 # For key = soma.PatchClamp.cmd, result[key] calls a method. If accessed multiple
-                # times (during multiple graph updates), side effects like pop()-ing command samples
-                # will cause later graphs to lose cmd waveforms. Hence, we cache the value to avoid
-                # having to call the method again.
+                # times (during multiple graph updates), samples may be "consumed" and lost after
+                # the first pass. Hence, we cache the value to avoid having to call the method again.
                 result.dep_vars[k] = result[k]
-            tmp = result[k]
 
-            if k in ["soma.IK.I", "soma.IKf.I", "soma.IKs.I", "soma.INa.I",
-                "soma.IH.I", "soma.INa1.I"]:
-                tmp *= -1.0   # flip sign of cationic currents for display. This replaces code that used to be in sequenceplot.py, line 70
+            vals = result[k]
 
             # Update scrolling plots
-            if isinstance(tmp, float):
-                plt.append(tmp)
+            if isinstance(vals, float):
+                plt.append(vals)   # Is this needed?
             else:
-                plt.append(tmp[1:])
-            
-        # Send waveforms to sequence plot windows, and
-        # let them decide which triggered regions of the data to extract
-        # for pulse plots
+                plt.append(vals[1:])  # Why is first value omitted?
+
+        # Send waveforms to sequence plot windows, which will then extract data for pulse plots
         self.clamp_param.new_result(result)
 
         self.params['Elapsed'] = result['t'][-1]
 
-        if self.runner.stop_after_cmd:
-            # If we have elected to stop after command (either single pulse or sequence) is done
-            if len(self.clamp_param.triggers) == 0 and self.runner.sim.cmd_done():
-                # Stop after command queue and trigger queue are BOTH empty
+        if len(self.clamp_param.triggers) == 0 and self.runner.sim.cmd_done():
+            # command (either single pulse or sequence) is done
+            if self.runner.stop_after_cmd:
+                # If we have elected to stop after command, then do so now
                 self.runner.stop()
         
         # update the schematic (i.e. the neuron cartoon animation)

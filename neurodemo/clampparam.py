@@ -206,6 +206,8 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
         self.child("Pulse", "Pulse Sequence").sigActivated.connect(self.pulse_sequence)
         self.child("Pulse", "Clear Pulses").sigActivated.connect(self.clear_triggers)
 
+        self.plot_win.analyzer.analysis_plot.update_unit_inference(mode_string=self.mode())
+
     def set_dt(self, dt):
         self.dt = dt
         self.dt_updated = True
@@ -218,6 +220,10 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
                 self.clamp.enabled = val
             elif param is self.child("Mode"):
                 self.set_mode(val)
+                # Analyzer objects get vc/ic mode info to auto-set y-axis units and Input selection
+                self.plot_win.analyzer.analysis_plot.update_unit_inference(mode_string=self.mode())
+                self.plot_win.analyzer.params.set_mode(mode_string=self.mode())
+                # Update cmd units on plot y-axes
                 if val == 'vc':
                     # Toggle off and back on to reset plot y-axis scaling
                     self["Plot Command"] = False
@@ -380,7 +386,7 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
     def clear_triggers(self):
         self.triggers = []
         self.clamp.clear_queue()
-        
+
     def add_plot(self, key, label):
         self.plot_keys.append(key)
         self.triggers = []
@@ -409,15 +415,17 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
         else:
             raise ValueError("Cannot find oldest result in queue")
 
-    def new_result(self, result):
+    def new_result(self, result, overflow=False):
 
         # store a few recent results to ensure triggers are handled on time
-        self.result_buffer.append(result)  # add the result to the end of the buffer list
-        if len(self.result_buffer) > self.result_buffer_size: 
-            # find the OLDEST time in the buffer, and return it
-            result = self.get_oldest_result()
-        else:
-            return # wait until the list is full to plot anything
+        if not overflow:
+            self.result_buffer.append(result)  # add the result to the end of the buffer list
+            if len(self.result_buffer) > self.result_buffer_size:
+                # find the OLDEST time in the buffer, pop it off queue, and return it
+                result = self.get_oldest_result()
+            else:
+                return # wait until the list is full to plot anything
+
         # print("new result, time = ", result["t"][0], result["t"][-1])
         # self.print_triggers()
         if len(self.triggers) == 0:  # no triggers - nothing to plot
@@ -425,7 +433,7 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
 
         time_arr = result["t"]
         TR = self.triggers[0] 
-        if TR.trigger_time > time_arr[-1]:  # no trigger yet
+        if TR.trigger_time > time_arr[-1]:  # Trigger is after end of the incoming data samples
             # print(f"*** Trigger detected at {TR.trigger_time:.4f} for time block: {time_arr[0]:.6f} - {time_arr[-1]:.6f}")
             # print(len(time_arr))
             return
@@ -433,11 +441,14 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
         trigger_index = max(
             0, int(np.round((TR.trigger_time - time_arr[0]) / self.dt))
         )  # index of trigger within new data
-        # number of points available is the smaller of the remainder of the current
-        # part of the unused buffer, or the remainder of the time array
+
+        # number of samples to copy. This is either the # of samples remaining in current trigger buffer,
+        # or # of post-trigger samples in the newly arrived data, whichever is smaller.
         npts = min(
             len(TR.buf) - TR.curr_buff_ptr, len(time_arr) - trigger_index
         )  # number of samples to copy from new data
+
+        # Copy results to trigger buffer
         # print("Trigger index: ", trigger_index, "npts: ", npts, "TR.curr: ", TR.curr_buff_ptr)
         for k in self.plot_keys:  # self.plot_keys is a list, buf is a recarray
             if k in result.keys():
@@ -447,12 +458,11 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
         # print('buff shape [0]: ', TR.buf.shape[0], time_arr[0])
         # print("n triggers: ", len(self.triggers))
         if TR.curr_buff_ptr >= TR.buf.shape[0]:
-            # If the trigger buffer would run over on next call, plot the current buffer
-            #  and remove it - TR.trigger_time
+            # If the trigger buffer location is at or past end, then plot it and remove it - TR.trigger_time
             self.plot_win.plot((np.arange(TR.buf.shape[0]) * self.dt), TR.buf, TR.info)
             self.triggers.pop(0)
             if len(time_arr) > npts:
-                # If there is data left over, try feeding it to the next trigger
+                # If there is data left over in the results, feed it to the next trigger
                 result = result[trigger_index+npts:]
-                self.new_result(result)
+                self.new_result(result, overflow=True)
 
