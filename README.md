@@ -55,26 +55,26 @@ Other ways to run from source code. All of these may require using the command l
 
     > conda install lmfit
 
-    c. Then install pyqtgraph and MetaArray:
+    b. Then install pyqtgraph and MetaArray:
 
     > pip install pyqtgraph MetaArray
 
-    d. Finally, download the neurodemo source by going to http://github.com/campagnola/neurodemo and clicking the "Download ZIP" button on the right side of the page. Unzip the file to a convenient directory, and run from there.
+    c. Finally, download the neurodemo source by going to http://github.com/campagnola/neurodemo and clicking the "Download ZIP" button on the right side of the page. Unzip the file to a convenient directory, and run from there.
 
 3. Create a single standalone executable file to distribute to others.
 
     - Git clone the repository. 
     - Create *and activate* a python virtual environment (venv) in the main repository directory and install all dependencies. Also, install pyinstaller:
     -     pip install pyinstaller
-    - Install Pillow, which is needed because the splash image size (1015x653 pixels) is bigger than max (760x480)
+    - Install Pillow, which is needed to resize the splash image from 1015x653 pixels to 760x480
     -     pip install Pillow
     - At the command line, cd to main repository directory, making sure the venv is active, then enter one of the following, based on whether you are on Windows or Mac:
     -     pyinstaller neurodemo_windows.spec
     -     pyinstaller neurodemo_mac.spec
     - This will create a subfolder "dist" containing a stand-alone executable that you can run by double-clicking. It will also create a subfolder "build" with intermediate files that you can generally ignore.
     - 
-    - The Windows executable should take 4-5 seconds to launch, during which it shows a splash screen. The splash screen feature is not compatible with Mac. The Mac version also might take curiously long to launch (almost 30 seconds). Not sure why, but it seems fine after that.
-    - I recommend converting the Mac executable to a dmg file using the Disk Utility app in MacOS. This preserves the executable permissions so that others can run it without having to run chmod. Go to "File", "New Image", "Image from folder", then choose either "read only" or "read/write". (There is also a compressed option, but it failed for me)
+    - The Windows executable should take 4-5 seconds to launch, during which it shows a splash screen. The splash screen feature is not compatible with Mac. The Mac version takes curiously long to launch (almost 30 seconds), but seems fine after that.
+    - I recommend converting the Mac executable to a dmg file using MacOS's Disk Utility app. This preserves executable permissions so that others can run it without chmod. Go to "File", "New Image", "Image from folder", then choose either "read only" or "read/write". (There is also a compressed option, but it failed for me)
 
 
 Running the Demo
