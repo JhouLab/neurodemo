@@ -379,6 +379,7 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
             # If not already running, then start a time-limited run
             self.sim.start(stop_after_cmd=True)
 
+
     def add_trigger(self, n, t, info):
         buf = np.empty(n, dtype=[(str(k), float) for k in self.plot_keys + ["t"]])
         self.triggers.append(Trigger(t, 0, buf, info))
@@ -425,7 +426,6 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
                 result = self.get_oldest_result()
             else:
                 return # wait until the list is full to plot anything
-
         # print("new result, time = ", result["t"][0], result["t"][-1])
         # self.print_triggers()
         if len(self.triggers) == 0:  # no triggers - nothing to plot
@@ -433,7 +433,7 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
 
         time_arr = result["t"]
         TR = self.triggers[0] 
-        if TR.trigger_time > time_arr[-1]:  # Trigger occurs after end of incoming samples. Can discard samples, since they will not end up in sequence plot.
+        if TR.trigger_time > time_arr[-1]:  # Trigger occurs after last incoming sample. Discard samples, since they are outside sequence plot.
             # print(f"*** Trigger detected at {TR.trigger_time:.4f} for time block: {time_arr[0]:.6f} - {time_arr[-1]:.6f}")
             # print(len(time_arr))
             return
@@ -441,28 +441,24 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
         trigger_index = max(
             0, int(np.round((TR.trigger_time - time_arr[0]) / self.dt))
         )  # index of trigger within new data
-
-        # number of samples to copy. This is either the # of samples remaining in current trigger buffer,
-        # or # of post-trigger samples in the newly arrived data, whichever is smaller.
+        # Number of samples to copy is # of samples remaining in current trigger buffer, or # post-trigger samples in new data, whichever is smaller
         npts = min(
             len(TR.buf) - TR.curr_buff_ptr, len(time_arr) - trigger_index
         )  # number of samples to copy from new data
-
-        # Copy results to trigger buffer
         # print("Trigger index: ", trigger_index, "npts: ", npts, "TR.curr: ", TR.curr_buff_ptr)
         for k in self.plot_keys:  # self.plot_keys is a list, buf is a recarray
             if k in result.keys():
-                TR.buf[k][TR.curr_buff_ptr : TR.curr_buff_ptr + npts] = result[k][trigger_index : trigger_index + npts]
+                TR.buf[k][TR.curr_buff_ptr : TR.curr_buff_ptr + npts] = result.get_plot_value(k)[trigger_index : trigger_index + npts]
 
         TR.curr_buff_ptr += npts
         # print('buff shape [0]: ', TR.buf.shape[0], time_arr[0])
         # print("n triggers: ", len(self.triggers))
         if TR.curr_buff_ptr >= TR.buf.shape[0]:
-            # If the trigger buffer location is at or past end, then plot it and remove it - TR.trigger_time
+            # If the trigger buffer location is at or past end, then plot it and remove it
             self.plot_win.plot((np.arange(TR.buf.shape[0]) * self.dt), TR.buf, TR.info)
             self.triggers.pop(0)
             if len(time_arr) > npts:
-                # If there is data left over in the results, feed it to the next trigger
+                # If there is data left over, try feeding it to the next trigger
                 result = result[trigger_index+npts:]
                 self.new_result(result, overflow=True)
 

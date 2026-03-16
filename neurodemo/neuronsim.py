@@ -208,22 +208,6 @@ class SimState(object):
         # allow lookup by (object, var)
         if isinstance(key, tuple):
             key = key[0].name + "." + key[1]
-
-        result = self.get_item_unsigned(key)
-
-        if key in ["soma.IK.I", "soma.IKf.I", "soma.IKs.I", "soma.INa.I",
-                   "soma.IH.I", "soma.INa1.I"]:
-            # Cationic currents are plotted as negative, i.e. downward for inward
-            # currents, and upward for outward currents, so multiply by negative one.
-            # Doing sign change here allows all graphs to change in tandem.
-            if isinstance(result, list):
-                return [-1 * x for x in result]
-            else:
-                return - result
-        else:
-            return result
-
-    def get_item_unsigned(self, key):
         try:
             # try this first for speed
             return self.state[self.indexes[key]]
@@ -241,6 +225,25 @@ class SimState(object):
                 return self.extra[key]
             else:
                 raise MissingCurrentException
+
+    def get_plot_value(self, key):
+        # Retrieve value, then flip sign for cations. Flipping sign here (rather than at plot) corrects all plots in tandem without redundant code
+
+        if isinstance(key, tuple):
+            key = key[0].name + "." + key[1]
+
+        result = self.__getitem__(key)
+
+        if key in ["soma.IK.I", "soma.IKf.I", "soma.IKs.I", "soma.INa.I",
+                   "soma.IH.I", "soma.INa1.I"]:
+            # Cationic currents are plotted as negative, i.e. downward for inward
+            # currents, and upward for outward currents, so multiply by negative one.
+            if isinstance(result, list):
+                return [-1 * x for x in result]
+            else:
+                return - result
+        else:
+            return result
 
     def keys(self):
         return list(self.indexes.keys()) + list(self.dep_vars.keys()) + list(self.extra.keys())
@@ -292,21 +295,22 @@ class SimState(object):
         return state
 
     def get_slice(self, sl):
-        kwds = {'difeq_state': self.state[:, sl]}
+        kwds = {'difeq_state': self.state[:, sl]}  # Create a new dictionary to replace the original
         for k,v in self.extra.items():
             kwds[k] = v[sl]
+        tmp_result = self.copy(**kwds)
         for k,v in self.dep_vars.items():
             if not callable(v):
                 # This is the CMD waveform, which used to be a bound method that was then converted to real values
-                self.dep_vars[k] = v[sl]
-        return self.copy(**kwds)
+                tmp_result.dep_vars[k] = v[sl]
+        return tmp_result
 
     def copy(self, **kwds):
         default_kwds = {
-            'difeq_vars': self.difeq_vars,
-            'dep_vars': self.dep_vars,
-            'difeq_state': self.state, 
-            'integrator': self.integrator,
+            'difeq_vars': self.difeq_vars.copy(),  # This is a dictionary, so make copy otherwise any change to dictionary entry in copy will reflect back on the original
+            'dep_vars': self.dep_vars.copy(),      # This is also a dictionary
+            'difeq_state': self.state,      # This is ndarray,
+            'integrator': self.integrator,  # This is a string, no need to make copy
         }
         default_kwds.update(self.extra)
         default_kwds.update(kwds)
@@ -571,10 +575,10 @@ class PatchClamp(Mechanism):
 
     def __init__(self, mode="ic", ra=0.1 * NU.MOhm, cpip=0.5e-12 * NU.F, **kwds):
         self.ra = ra
-        self.cpip = cpip    # Pipette capacitance
+        self.cpip = cpip
         self._mode = mode
         self.cmd_queue = []
-        self.cmd_queue2 = []  # Copy of queue, since we need it for generating plot graphs
+        self.cmd_queue2 = []  # Copy of queue, for plotting
         self.cmd = []
         self.last_time = 0.0
         self.holding = {"ic": 0.0 * NU.pA, "vc": -65 * NU.mV}

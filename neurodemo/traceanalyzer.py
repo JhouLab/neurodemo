@@ -1,8 +1,6 @@
 from __future__ import annotations
 import numpy as np
 import pyqtgraph as pg
-from scipy.special import y1_zeros
-
 from . import qt
 import pyqtgraph.parametertree as pt
 from lmfit import Model
@@ -12,7 +10,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     # This import is circular, so we don't do it at runtime
     from neurodemo.sequenceplot import SequencePlotWindow
-
 
 class TraceAnalyzer(qt.QWidget):
     def __init__(self, seq_plotter: SequencePlotWindow):
@@ -92,7 +89,6 @@ class TraceAnalyzer(qt.QWidget):
 
 class TraceAnalyzerGroup(pt.parameterTypes.GroupParameter):
     need_update = qt.Signal()    
-    added_new = qt.Signal()
 
     def __init__(self, seq_plot: SequencePlotWindow, **kwds):
         analyses = ['min', 'max', 'mean', 'exp_tau', 'spike_count', 'spike_latency']
@@ -123,7 +119,7 @@ class TraceAnalyzerGroup(pt.parameterTypes.GroupParameter):
         # Currently this is updated every 20ms, for all children, which seems inefficient.
         # Should we update only if inputs are different?
         self.inputs = list(inputs)
-        self.inputs.remove('t')   # Analyzer doesn't operate on time variable, so don't add it to dropdown menu
+        self.inputs.remove('t')
         for ch in self.children():
             ch.set_input_list(self.inputs)
 
@@ -455,7 +451,14 @@ class EvalPlotter(qt.QWidget):
             # No valid y-values
             return
 
+        if self.info_list is None:
+            self.info_list = [0]  # This condition is unlikely, but we check out of paranoia
+
+        # Find positions where sequence index = 0. These are the starting points of each sequence, where we switch to new color
         start_idx = [i for i, val in enumerate(self.info_list) if val == 0]
+
+        if len(start_idx) == 0 or start_idx[0] != 0:
+            start_idx.insert(0, 0) # Force list to start with 0, or else initial sweeps won't plot
 
         self.plot.clear()
 
