@@ -1,8 +1,6 @@
 from __future__ import annotations
 import numpy as np
 import pyqtgraph as pg
-from scipy.special import y1_zeros
-
 from . import qt
 import pyqtgraph.parametertree as pt
 from lmfit import Model
@@ -12,7 +10,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     # This import is circular, so we don't do it at runtime
     from neurodemo.sequenceplot import SequencePlotWindow
-
 
 class TraceAnalyzer(qt.QWidget):
     def __init__(self, seq_plotter: SequencePlotWindow):
@@ -92,7 +89,6 @@ class TraceAnalyzer(qt.QWidget):
 
 class TraceAnalyzerGroup(pt.parameterTypes.GroupParameter):
     need_update = qt.Signal()    
-    added_new = qt.Signal()
 
     def __init__(self, seq_plot: SequencePlotWindow, **kwds):
         analyses = ['min', 'max', 'mean', 'exp_tau', 'spike_count', 'spike_latency']
@@ -111,11 +107,10 @@ class TraceAnalyzerGroup(pt.parameterTypes.GroupParameter):
 
         an: EvalPlotter = self.plotter.analyzer.analysis_plot
 
-        # If either y1 or y2 are blank, then populate it with newly added analyzer
+        # If y1 is blank, populate it with newly added analyzer. We don't do this for y2, as this sometimes leads
+        # to overlappoing plots with different (and incompatible) units
         if str(an.y1_code.text()).lower() == '':
             an.y1_code.setText(param.name())
-        elif str(an.y2_code.text()).lower() == '':
-            an.y2_code.setText(param.name())
 
         param.need_update.connect(self.need_update)
         self.need_update.emit()
@@ -124,7 +119,7 @@ class TraceAnalyzerGroup(pt.parameterTypes.GroupParameter):
         # Currently this is updated every 20ms, for all children, which seems inefficient.
         # Should we update only if inputs are different?
         self.inputs = list(inputs)
-        self.inputs.remove('t')   # Analyzer doesn't operate on time variable, so don't add it to dropdown menu
+        self.inputs.remove('t')
         for ch in self.children():
             ch.set_input_list(self.inputs)
 
@@ -173,7 +168,7 @@ class TraceAnalyzerParameter(pt.parameterTypes.GroupParameter):
             elif param is self.child('Type'):
                 self.show_threshold_param()
             elif param is self and change == 'name':
-                self.rgn_label.setFormat(self.name())
+                self.rgn_label.setFormat(self.name())  # Note use of setFormat() rather than setText(), which works temporarily but then reverts to original name.
             self.need_update.emit(self)
 
     def show_threshold_param(self):
@@ -417,12 +412,9 @@ class EvalPlotter(qt.QWidget):
         xcode = str(self.x_code.text()).lower()  # Read user input text for X-axis values
         y1_code = str(self.y1_code.text()).lower()  # Read user input text for Y-axis values
         y2code = str(self.y2_code.text()).lower()  # Read user input text for Y-axis values
-        if xcode == '':
-            # No x values, can't plot
-            return
-
-        if y1_code == '' and y2code == '':
-            # No y values, can't plot
+        if xcode == '' or (y1_code == '' and y2code == ''):
+            # Can't plot unless we have x-values and at least one y
+            self.plot.clear()
             return
 
         try:
@@ -459,7 +451,14 @@ class EvalPlotter(qt.QWidget):
             # No valid y-values
             return
 
+        if self.info_list is None:
+            self.info_list = [0]  # This condition is unlikely, but we check out of paranoia
+
+        # Find positions where sequence index = 0. These are the starting points of each sequence, where we switch to new color
         start_idx = [i for i, val in enumerate(self.info_list) if val == 0]
+
+        if len(start_idx) == 0 or start_idx[0] != 0:
+            start_idx.insert(0, 0) # Force list to start with 0, or else initial sweeps won't plot
 
         self.plot.clear()
 

@@ -206,7 +206,7 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
         self.child("Pulse", "Pulse Sequence").sigActivated.connect(self.pulse_sequence)
         self.child("Pulse", "Clear Pulses").sigActivated.connect(self.clear_triggers)
 
-        self.plot_win.analyzer.analysis_plot.update_unit_inference(mode_string=self.mode())
+        self.plot_win.analyzer.analysis_plot.update_unit_inference(mode_string=self.mode()) # Analyzer needs to know whether we are in VC or IC, so it can auto-set plot units
 
     def set_dt(self, dt):
         self.dt = dt
@@ -220,18 +220,18 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
                 self.clamp.enabled = val
             elif param is self.child("Mode"):
                 self.set_mode(val)
-                # Analyzer objects get vc/ic mode info to auto-set y-axis units and Input selection
+                # Send mode (vc/ic) to analyzer objects, so they can auto-set y-axis units and Input selection
                 self.plot_win.analyzer.analysis_plot.update_unit_inference(mode_string=self.mode())
                 self.plot_win.analyzer.params.set_mode(mode_string=self.mode())
                 # Update cmd units on plot y-axes
                 if val == 'vc':
-                    # Toggle off and back on to reset plot y-axis scaling
+                    # Toggle plot off and on to set correct y-axis scale and units
                     self["Plot Command"] = False
                     self["Plot Command"] = True
                     # In voltage-clamp, current plot is ON by default
                     self["Plot Current"] = True
                 elif val == 'ic':
-                    # Toggle off and back on to reset plot y-axis scaling
+                    # Toggle plot off and on to set correct y-axis scale and units
                     self["Plot Command"] = False
                     self["Plot Command"] = True
                     # In current-clamp, current plot is OFF by default
@@ -379,6 +379,7 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
             # If not already running, then start a time-limited run
             self.sim.start(stop_after_cmd=True)
 
+
     def add_trigger(self, n, t, info):
         buf = np.empty(n, dtype=[(str(k), float) for k in self.plot_keys + ["t"]])
         self.triggers.append(Trigger(t, 0, buf, info))
@@ -419,13 +420,12 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
 
         # store a few recent results to ensure triggers are handled on time
         if not overflow:
-            self.result_buffer.append(result)  # add the result to the end of the buffer list
+            self.result_buffer.append(result)  # add result to end of buffer list, but only if samples are NOT overflow from previous new_result() call, as that would cause samples to process twice, out of order.
             if len(self.result_buffer) > self.result_buffer_size:
                 # find the OLDEST time in the buffer, pop it off queue, and return it
                 result = self.get_oldest_result()
             else:
                 return # wait until the list is full to plot anything
-
         # print("new result, time = ", result["t"][0], result["t"][-1])
         # self.print_triggers()
         if len(self.triggers) == 0:  # no triggers - nothing to plot
@@ -433,7 +433,7 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
 
         time_arr = result["t"]
         TR = self.triggers[0] 
-        if TR.trigger_time > time_arr[-1]:  # Trigger is after end of the incoming data samples
+        if TR.trigger_time > time_arr[-1]:  # Trigger occurs after last incoming sample. Discard samples, since they are outside sequence plot.
             # print(f"*** Trigger detected at {TR.trigger_time:.4f} for time block: {time_arr[0]:.6f} - {time_arr[-1]:.6f}")
             # print(len(time_arr))
             return
@@ -441,28 +441,24 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
         trigger_index = max(
             0, int(np.round((TR.trigger_time - time_arr[0]) / self.dt))
         )  # index of trigger within new data
-
-        # number of samples to copy. This is either the # of samples remaining in current trigger buffer,
-        # or # of post-trigger samples in the newly arrived data, whichever is smaller.
+        # Number of samples to copy is # of samples remaining in current trigger buffer, or # post-trigger samples in new data, whichever is smaller
         npts = min(
             len(TR.buf) - TR.curr_buff_ptr, len(time_arr) - trigger_index
         )  # number of samples to copy from new data
-
-        # Copy results to trigger buffer
         # print("Trigger index: ", trigger_index, "npts: ", npts, "TR.curr: ", TR.curr_buff_ptr)
         for k in self.plot_keys:  # self.plot_keys is a list, buf is a recarray
             if k in result.keys():
-                TR.buf[k][TR.curr_buff_ptr : TR.curr_buff_ptr + npts] = result[k][trigger_index : trigger_index + npts]
+                TR.buf[k][TR.curr_buff_ptr : TR.curr_buff_ptr + npts] = result.get_plot_value(k)[trigger_index : trigger_index + npts]
 
         TR.curr_buff_ptr += npts
         # print('buff shape [0]: ', TR.buf.shape[0], time_arr[0])
         # print("n triggers: ", len(self.triggers))
         if TR.curr_buff_ptr >= TR.buf.shape[0]:
-            # If the trigger buffer location is at or past end, then plot it and remove it - TR.trigger_time
+            # If the trigger buffer location is at or past end, then plot it and remove it
             self.plot_win.plot((np.arange(TR.buf.shape[0]) * self.dt), TR.buf, TR.info)
             self.triggers.pop(0)
             if len(time_arr) > npts:
-                # If there is data left over in the results, feed it to the next trigger
+                # If there is data left over, try feeding it to the next trigger
                 result = result[trigger_index+npts:]
                 self.new_result(result, overflow=True)
 

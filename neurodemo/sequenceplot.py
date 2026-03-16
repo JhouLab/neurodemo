@@ -14,7 +14,7 @@ from .traceanalyzer import TraceAnalyzer  # user friendly analyzer
 class SequencePlotWindow(qt.QWidget):
     def __init__(self):
         qt.QWidget.__init__(self)
-        self.cached_mode = 'ic'
+        self.mode = 'ic'
         self.layout = qt.QGridLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.layout)
@@ -56,10 +56,9 @@ class SequencePlotWindow(qt.QWidget):
     def plot(self, t, data, info):
         if not self.hold_check.isChecked():
             self.clear_data()
-
-        # If mode has changed, clear all time plots, and update cached mode
-        if self.cached_mode != info['mode']:
-            self.cached_mode = info['mode']
+        # check to see if mode has changed, and if so, clear time plots, and update cached mode
+        if self.mode != info['mode']:
+            self.mode = info['mode']
             self.clear_data()
 
         if info['seq_len'] == 0:
@@ -72,7 +71,6 @@ class SequencePlotWindow(qt.QWidget):
             self.plotted_data.append((plt_data, plt))
             plt.setLimits(xMin=min(t), xMax=max(t))  # Prevent user from zooming out too far
         try:
-            # Add analysis results to analyzer, which can use it to generate scatterplot
             self.analyzer.add_data(t, data, info)
         except:
             pg.debug.printExc('Error analyzing data:')
