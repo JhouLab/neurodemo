@@ -3,7 +3,7 @@ Neuron Demonstration
 
 <div align="center"><img src="https://github.com/campagnola/neurodemo/blob/master/screenshot.png" width="800"></div>
 
-Luke Campagnola & Paul Manis
+This is a fork from the project by Luke Campagnola & Paul Manis (with a few bug fixes by Tom Jhou to the sequence plotter)
 
 
 This is an educational simulation of a simple neuron.
@@ -28,72 +28,99 @@ Requirements
 * PyQt5 or 6
 * PyQtGraph
 * lmfit
+* MetaArray
 
 
 Installation
 ------------
 
-The easiest way to run this is via the standalone executables I already made (see bottom of this page). That requires no knowledge of Python or command line jargon.
+### Most users: download the app
 
-Other ways to run from source code. All of these may require using the command line at least a little bit:
+If you just want to run the demo, download the prebuilt app for your platform from the
+[Releases page](https://github.com/JhouLab/neurodemo/releases) — no Python installation required.
 
-1. Using base Python:
+* **Windows**: download the `.exe` and double-click it to run. Will show a splash screen before opening.
+* **macOS**: download the `.dmg`, open it, and drag the app to Applications. No splash screen appears, and may take up to 30 seconds to open. The app is not signed with an Apple developer certificate, so the first launch will be blocked; go to System Settings > Privacy & Security and allow it there. This only allows this one app and does not otherwise weaken your Mac's security.
 
-   This is my personal preference due to ease and simplicity. Install Python from www.python.org, then open a command prompt, and install dependencies:
+### Running from source (intermediate users)
 
-   > pip install numpy scipy PyQt6 pyqtgraph lmfit MetaArray
+If you want to run from source instead (e.g. to modify the code), first clone the repository.
 
-   Download the neurodemo source code from https://github.com/campagnola/neurodemo or https://github.com/JhouLab/neurodemo and click the "Download ZIP" button on the right side of the page. Unzip the file to directory that is easily accessible to you, then open a command prompt, cd to that directory, and type:
+Using the command line:
 
-   > python -m neurodemo.py
+```
+git clone https://github.com/JhouLab/neurodemo.git
+cd neurodemo
+```
 
-   This should run the program.
+Or using [GitHub Desktop](https://desktop.github.com/): click "Add" > "Clone repository",
+select `JhouLab/neurodemo` (or paste `https://github.com/JhouLab/neurodemo.git` under the URL
+tab), choose a local path, and click "Clone".
 
-2. Using Anaconda/miniconda:
-    
-    a. Python novices are often told to use Anaconda, but that is extreme overkill for this project, which only needs four of the 300+ packages that Anaconda comes bloated with. If you really want to go that route, download it here (http://www.anaconda.com), then install lmfit, pyqtgraph, and MetaArray, which Anaconda doesn't have by default:
+**Option A: Plain Python (venv)**
 
-    > conda install lmfit
+Windows: double-click `Create_Env.bat` once to set up the environment, then double-click
+`Run_this.bat` any time to launch the program.
 
-    b. Then install pyqtgraph and MetaArray:
+macOS: double-click `Create_Env.command` once to set up the environment, then double-click
+`Run_this.command` any time to launch the program. (The first time, macOS may require you to
+right-click the file and choose "Open" to bypass the unidentified-developer warning.)
 
-    > pip install pyqtgraph MetaArray
+Both scripts check that your Python is 3.10 or higher (installing from
+[python.org](https://www.python.org/downloads/) first if needed) and create a local virtual
+environment (`neurodemo_venv`) so the installed packages don't affect the rest of your system.
 
-    c. Finally, download the neurodemo source by going to http://github.com/campagnola/neurodemo and clicking the "Download ZIP" button on the right side of the page. Unzip the file to a convenient directory, and run from there.
+If you'd rather do this manually from the command line instead of using the scripts:
 
-3. Create a single standalone executable file to distribute to others.
+All commands below must be run from inside the `neurodemo` directory:
 
-    - Git clone the repository. 
-    - Create *and activate* a python virtual environment (venv) in the main repository directory and install all dependencies. Also, install pyinstaller:
-    -     pip install pyinstaller
-    - Install Pillow, which is needed to resize the splash image from 1015x653 pixels to 760x480
-    -     pip install Pillow
-    - At the command line, cd to main repository directory, making sure the venv is active, then enter one of the following, based on whether you are on Windows or Mac:
-    -     pyinstaller neurodemo_windows.spec
-    -     pyinstaller neurodemo_mac.spec
-    - This will create a subfolder "dist" containing a stand-alone executable that you can run by double-clicking. It will also create a subfolder "build" with intermediate files that you can generally ignore.
-    - 
-    - The Windows executable should take 4-5 seconds to launch, during which it shows a splash screen. The splash screen feature is not compatible with Mac. The Mac version takes curiously long to launch (almost 30 seconds), but seems fine after that.
-    - I recommend converting the Mac executable to a dmg file using MacOS's Disk Utility app. This preserves executable permissions so that others can run it without chmod. Go to "File", "New Image", "Image from folder", then choose either "read only" or "read/write". (There is also a compressed option, but it failed for me)
+Windows (cmd or PowerShell):
 
+```
+py -3 -m venv neurodemo_venv
+neurodemo_venv\Scripts\activate
+pip install -r requirements.txt
+python neurodemo.py
+```
 
-Running the Demo
-----------------
+macOS / Linux:
 
-You can launch the demo from the terminal by navigating to the location where you extracted the source code (eg, `cd Downloads\neurodemo\`) and then typing `python neurodemo.py`.
+```
+python3 -m venv neurodemo_venv
+source neurodemo_venv/bin/activate
+pip install -r requirements.txt
+python neurodemo.py
+```
 
-Windows: Open the folder where you extracted the neurodemo source code. Right click `demo.py` and select "Open with..". Navigate to the location where you installed anaconda or miniconda (you may need to click something like "browse" or "choose another application" depending on your version of windows). Select `python.exe`.
+**Option B: Anaconda / Miniconda**
 
-macOS: You can launch as above, or install the dmg file and just start the app. 
+```
+conda create -n neurodemo python>=3.10
+conda activate neurodemo
+pip install -r requirements.txt
+python neurodemo.py
+```
 
+Once installed, you can launch the demo by re-activating the environment
+(`conda activate neurodemo` or the `activate` step above) and running `python neurodemo.py`.
 
+### Building a standalone executable (maintainers)
 
-Link to standalone executables (Windows and Mac M1 versions):
-----------------
+To build a distributable `.exe` or `.dmg` yourself, create and activate a virtual environment
+as above, install the dependencies plus `pyinstaller` and `Pillow` (needed to resize the splash
+image from 1015x653 down to the 760x480 max), then run:
 
-Here is a folder containing several standalone executables:
-https://www.dropbox.com/scl/fo/grh1ihu307gn4vfzljgnt/AJnmBrKSig-7XWAAWVYLoIs?rlkey=i366zvvfd3r5rwki1qh2t6vry&dl=0
+```
+pip install pyinstaller Pillow
+pyinstaller neurodemo_windows.spec   # Windows
+pyinstaller neurodemo_mac.spec       # macOS
+```
 
-Click the download link for the version you want (Windows or M1 Mac). You may see a dialog asking you to sign into Dropbox. At the bottom will be a link "continue with download only". Select that to bypass logging in.
+This creates a `dist/` folder containing the standalone executable, and a `build/` folder of
+intermediate files that can be ignored. On Windows, the executable takes a few seconds to
+launch and shows a splash screen first; on macOS there is no splash screen and first launch
+can take up to ~30 seconds.
 
-The Mac version is a dmg file. Double click it, and it will mount a virtual disk containing a single executable file. Running it will be initially blocked because I have not paid $99/year to Apple to make this an officially sanctioned app. You have to enable it in the "Privacy and Security" settings. This will enable just this app, and does not leave you vulnerable to malicious software.
+On macOS, convert the executable to a `.dmg` using Disk Utility, which preserves executable
+permissions so others don't need to run `chmod`: File > New Image > Image from Folder, then
+choose "read only" or "read/write" (the compressed option has been unreliable).
