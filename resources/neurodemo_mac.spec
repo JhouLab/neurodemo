@@ -1,14 +1,14 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 added_files = [
-    ( './neurodemo/images/channel.svg', 'images' ),
-    ( './neurodemo/images/channel2.svg', 'images' ),
-    ( './neurodemo/images/cell.svg', 'images' ),
-    ( './neurodemo/images/pipette.svg', 'images' )
+    ( '../neurodemo/images/channel.svg', 'images' ),
+    ( '../neurodemo/images/channel2.svg', 'images' ),
+    ( '../neurodemo/images/cell.svg', 'images' ),
+    ( '../neurodemo/images/pipette.svg', 'images' )
 ]
 
 a = Analysis(
-    ['neurodemo.py'],
+    ['../neurodemo.py'],
     pathex=[],
     binaries=[],
     datas=added_files,
@@ -41,4 +41,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon='icon.icns',
 )
