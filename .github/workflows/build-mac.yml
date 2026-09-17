@@ -1,0 +1,63 @@
+name: Build macOS app
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-13    # Intel (x86_64) runner
+            arch: x86_64
+          - os: macos-14    # Apple Silicon (arm64) runner
+            arch: arm64
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Build app with PyInstaller
+        run: pyinstaller neurodemo_mac.spec
+
+      - name: Package as .dmg
+        run: |
+          mkdir -p dist/dmg
+          cp -r "dist/neurodemo.app" dist/dmg/
+          create-dmg \
+            --volname "neurodemo" \
+            --volicon "icon.icns" \
+            --window-pos 300 300 \
+            --window-size 400 300 \
+            --icon-size 32 \
+            --icon "neurodemo.app" 100 100 \
+            --hide-extension "neurodemo.app" \
+            --app-drop-link 250 100 \
+            "dist/neurodemo-mac-${{ matrix.arch }}.dmg" \
+            "dist/dmg/"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: neurodemo-mac-${{ matrix.arch }}
+          path: dist/neurodemo-mac-${{ matrix.arch }}.dmg
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/neurodemo-mac-${{ matrix.arch }}.dmg

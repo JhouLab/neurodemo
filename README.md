@@ -106,21 +106,35 @@ Once installed, you can launch the demo by re-activating the environment
 
 ### Building a standalone executable (maintainers)
 
-To build a distributable `.exe` or `.dmg` yourself, create and activate a virtual environment
-as above, install the dependencies plus `pyinstaller` and `Pillow` (needed to resize the splash
-image from 1015x653 down to the 760x480 max), then run:
+**Windows `.exe`:** create and activate a virtual environment as above, install the
+dependencies plus `pyinstaller` and `Pillow` (needed to resize the splash image from
+1015x653 down to the 760x480 max), then run:
 
 ```
 pip install pyinstaller Pillow
-pyinstaller neurodemo_windows.spec   # Windows
-pyinstaller neurodemo_mac.spec       # macOS
+pyinstaller neurodemo_windows.spec
 ```
 
 This creates a `dist/` folder containing the standalone executable, and a `build/` folder of
-intermediate files that can be ignored. On Windows, the executable takes a few seconds to
-launch and shows a splash screen first; on macOS there is no splash screen and first launch
-can take up to ~30 seconds.
+intermediate files that can be ignored. The executable shows a splash screen for a few seconds
+on launch.
 
-On macOS, convert the executable to a `.dmg` using Disk Utility, which preserves executable
-permissions so others don't need to run `chmod`: File > New Image > Image from Folder, then
-choose "read only" or "read/write" (the compressed option has been unreliable).
+**macOS `.dmg`:** the [Build macOS app](.github/workflows/build-mac.yml) GitHub Actions
+workflow builds both Intel and Apple Silicon `.dmg` files automatically — no Mac required.
+Trigger it from the "Actions" tab on GitHub ("Build macOS app" > "Run workflow"), or by pushing
+a tag like `v1.2.0` (which also attaches the built `.dmg` files to the corresponding GitHub
+Release). The finished `.dmg` files can be downloaded from the workflow run's "Artifacts"
+section, or from the release.
+
+If you'd rather build manually on a Mac instead: install the dependencies plus `pyinstaller`
+and [create-dmg](https://github.com/create-dmg/create-dmg) (`brew install create-dmg`), then:
+
+```
+pyinstaller neurodemo_mac.spec
+mkdir -p dist/dmg
+cp -r dist/neurodemo.app dist/dmg/
+create-dmg --volname neurodemo --volicon icon.icns \
+  --app-drop-link 250 100 dist/neurodemo.dmg dist/dmg/
+```
+
+First launch on macOS can take up to ~30 seconds (no splash screen is shown).
