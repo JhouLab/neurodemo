@@ -21,5 +21,5 @@ echo Installing requirements...
 pip install -r requirements.txt
 
 echo.
-echo Done! Double-click Run_this_Windows.bat to start the program.
+echo Done! Double-click Run_this_windows.bat to start the program.
 pause

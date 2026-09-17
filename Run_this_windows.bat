@@ -3,7 +3,7 @@ setlocal
 cd /d "%~dp0"
 
 if not exist neurodemo_venv\Scripts\activate.bat (
-    echo Virtual environment not found. Please double-click Create_Env_Windows.bat first.
+    echo Virtual environment not found. Please double-click Create_env_windows.bat first.
     pause
     exit /b 1
 )

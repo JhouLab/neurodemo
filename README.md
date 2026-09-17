@@ -59,11 +59,11 @@ tab), choose a local path, and click "Clone".
 
 **Option A: Plain Python (venv)**
 
-Windows: double-click `Create_Env_Windows.bat` once to set up the environment, then double-click
-`Run_this_Windows.bat` any time to launch the program.
+Windows: double-click `Create_env_windows.bat` once to set up the environment, then double-click
+`Run_this_windows.bat` any time to launch the program.
 
-macOS: double-click `Create_Env_Mac.command` once to set up the environment, then double-click
-`Run_this_Mac.command` any time to launch the program. (The first time, macOS may require you to
+macOS: double-click `Create_env_mac.command` once to set up the environment, then double-click
+`Run_this_mac.command` any time to launch the program. (The first time, macOS may require you to
 right-click the file and choose "Open" to bypass the unidentified-developer warning.)
 
 Both scripts check that your Python is 3.10 or higher (installing from

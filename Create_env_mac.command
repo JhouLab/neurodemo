@@ -19,5 +19,5 @@ echo "Installing requirements..."
 pip install -r requirements.txt || { read -p "Press Enter to exit..."; exit 1; }
 
 echo ""
-echo "Done! Double-click Run_this_Mac.command to start the program."
+echo "Done! Double-click Run_this_mac.command to start the program."
 read -p "Press Enter to exit..."

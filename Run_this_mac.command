@@ -2,7 +2,7 @@
 cd "$(dirname "$0")"
 
 if [ ! -f neurodemo_venv/bin/activate ]; then
-    echo "Virtual environment not found. Please double-click Create_Env_Mac.command first."
+    echo "Virtual environment not found. Please double-click Create_env_mac.command first."
     read -p "Press Enter to exit..."
     exit 1
 fi
