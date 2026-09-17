@@ -108,11 +108,12 @@ Once installed, you can launch the demo by re-activating the environment
 
 **Windows `.exe`:** create and activate a virtual environment as above, install the
 dependencies plus `pyinstaller` and `Pillow` (needed to resize the splash image from
-1015x653 down to the 760x480 max), then run:
+1015x653 down to the 760x480 max), then run this from the repo root (the `.spec` files rely on
+paths relative to that directory):
 
 ```
 pip install pyinstaller Pillow
-pyinstaller neurodemo_windows.spec
+pyinstaller resources/neurodemo_windows.spec
 ```
 
 This creates a `dist/` folder containing the standalone executable, and a `build/` folder of
@@ -127,10 +128,11 @@ Release). The finished `.dmg` files can be downloaded from the workflow run's "A
 section, or from the release.
 
 If you'd rather build manually on a Mac instead: install the dependencies plus `pyinstaller`
-and [create-dmg](https://github.com/create-dmg/create-dmg) (`brew install create-dmg`), then:
+and [create-dmg](https://github.com/create-dmg/create-dmg) (`brew install create-dmg`), then
+run this from the repo root:
 
 ```
-pyinstaller neurodemo_mac.spec
+pyinstaller resources/neurodemo_mac.spec
 mkdir -p dist/dmg
 cp -r dist/neurodemo.app dist/dmg/
 create-dmg --volname neurodemo --volicon icon.icns \

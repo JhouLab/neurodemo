@@ -33,7 +33,7 @@ jobs:
         run: brew install create-dmg
 
       - name: Build app with PyInstaller
-        run: pyinstaller neurodemo_mac.spec
+        run: pyinstaller resources/neurodemo_mac.spec
 
       - name: Package as .dmg
         run: |
