@@ -106,10 +106,16 @@ Once installed, you can launch the demo by re-activating the environment
 
 ### Building a standalone executable (maintainers)
 
-**Windows `.exe`:** create and activate a virtual environment as above, install the
-dependencies plus `pyinstaller` and `Pillow` (needed to resize the splash image from
-1015x653 down to the 760x480 max), then run this from the repo root (the `.spec` files rely on
-paths relative to that directory):
+**Windows `.exe`:** the [Build Windows app](.github/workflows/build-windows.yml) GitHub Actions
+workflow builds it automatically. Trigger it from the "Actions" tab on GitHub ("Build Windows
+app" > "Run workflow"), or by pushing a tag like `v1.2.0` (which also attaches the built `.exe`
+to the corresponding GitHub Release). The finished `.exe` can be downloaded from the workflow
+run's "Artifacts" section, or from the release.
+
+If you'd rather build manually instead: create and activate a virtual environment as above,
+install the dependencies plus `pyinstaller` and `Pillow` (needed to resize the splash image
+from 1015x653 down to the 760x480 max), then run this from the repo root (so that the output
+`dist/`/`build/` folders land there rather than inside `resources/`):
 
 ```
 pip install pyinstaller Pillow
@@ -129,7 +135,7 @@ section, or from the release.
 
 If you'd rather build manually on a Mac instead: install the dependencies plus `pyinstaller`
 and [create-dmg](https://github.com/create-dmg/create-dmg) (`brew install create-dmg`), then
-run this from the repo root:
+run this from the repo root (same reason as above):
 
 ```
 pyinstaller resources/neurodemo_mac.spec
