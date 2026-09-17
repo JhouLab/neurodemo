@@ -41,7 +41,7 @@ jobs:
           cp -r "dist/neurodemo.app" dist/dmg/
           create-dmg \
             --volname "neurodemo" \
-            --volicon "icon.icns" \
+            --volicon "resources/icon.icns" \
             --window-pos 300 300 \
             --window-size 400 300 \
             --icon-size 32 \

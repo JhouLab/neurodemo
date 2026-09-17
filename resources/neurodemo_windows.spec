@@ -22,7 +22,7 @@ a = Analysis(
 )
 pyz = PYZ(a.pure)
 splash = Splash(
-    'splash_screen.png',
+    'resources/splash_screen.png',
     binaries=a.binaries,
     datas=a.datas,
     text_pos=None,

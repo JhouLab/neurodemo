@@ -135,7 +135,7 @@ run this from the repo root:
 pyinstaller resources/neurodemo_mac.spec
 mkdir -p dist/dmg
 cp -r dist/neurodemo.app dist/dmg/
-create-dmg --volname neurodemo --volicon icon.icns \
+create-dmg --volname neurodemo --volicon resources/icon.icns \
   --app-drop-link 250 100 dist/neurodemo.dmg dist/dmg/
 ```
 
