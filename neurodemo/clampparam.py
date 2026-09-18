@@ -218,6 +218,18 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
                 self.clamp.enabled = val
             elif param is self.child("Mode"):
                 self.set_mode(val)
+                if val == 'vc':
+                    # Toggle off and back on to reset plot y-axis scaling
+                    self["Plot Command"] = False
+                    self["Plot Command"] = True
+                    # In voltage-clamp, current plot is ON by default
+                    self["Plot Current"] = True
+                elif val == 'ic':
+                    # Toggle off and back on to reset plot y-axis scaling
+                    self["Plot Command"] = False
+                    self["Plot Command"] = True
+                    # In current-clamp, current plot is OFF by default
+                    self["Plot Current"] = False
             elif param is self.child("Holding"):
                 self.clamp.set_holding(self.mode(), val)
             elif param is self.child("Pipette Cap"):
@@ -414,7 +426,7 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
 
         time_arr = result["t"]
         TR = self.triggers[0] 
-        if TR.trigger_time > time_arr[-1]:  # no trigger yet
+        if TR.trigger_time > time_arr[-1]:  # Trigger occurs after last incoming sample. Discard samples, since they are outside sequence plot.
             # print(f"*** Trigger detected at {TR.trigger_time:.4f} for time block: {time_arr[0]:.6f} - {time_arr[-1]:.6f}")
             # print(len(time_arr))
             return

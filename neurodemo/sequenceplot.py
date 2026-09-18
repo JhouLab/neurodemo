@@ -56,7 +56,7 @@ class SequencePlotWindow(qt.QWidget):
     def plot(self, t, data, info):
         if not self.hold_check.isChecked():
             self.clear_data()
-        # check to see if mode has changed, and if so, clear the plot
+        # check to see if mode has changed, and if so, clear time plots, and update cached mode
         if self.mode != info['mode']:
             self.mode = info['mode']
             self.clear_data()
@@ -67,13 +67,9 @@ class SequencePlotWindow(qt.QWidget):
             pen = (info['seq_ind'], info['seq_len'] * 4./3.)
         
         for k, plt in self.plots.items():
-            sign = 1.0
-            if k in ["soma.IK.I", "soma.IKf.I", "soma.IKs.I", "soma.INa.I",
-                "soma.IH.I", "soma.INa1.I"]:
-                sign = -1.0   # flip sign of cation currents for display
-            plt_data = plt.plot(t, sign*data[k], pen=pen)
+            plt_data = plt.plot(t, data[k], pen=pen)  # Add to time plots
             self.plotted_data.append((plt_data, plt))
-        
+            plt.setLimits(xMin=min(t), xMax=max(t))  # Prevent user from zooming out too far
         try:
             self.analyzer.add_data(t, data, info)
         except:

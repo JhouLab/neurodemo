@@ -58,6 +58,7 @@ class SimRunner(qt.QObject):
         blocksize = int(max(2, self.blocksize * self.speed))
         result = self.sim.run(blocksize, **self.run_args)
         self.new_result.emit(result)
+        qt.QApplication.processEvents()  # This helps keep GUI responsive if computations+GUI updates exceed 20ms timer interval
 
     def set_speed(self, speed):
         self.speed = speed
