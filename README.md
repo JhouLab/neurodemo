@@ -24,30 +24,28 @@ Installation
 
 ### Most users: download the app
 
-If you just want to run the demo, download the prebuilt app for your platform from the
+If you just want to run the app, download the prebuilt executable from the
 [Releases page](https://github.com/JhouLab/neurodemo/releases) — no Python installation required.
 
-* **Windows**: download the `.exe` and double-click it to run. Will show a splash screen before opening.
+* **Windows**: download the `.exe` and double-click it to run. Windows Defender may give you a warning - just dismiss it. The warning just means I didn't pay money for a code signing certificate.
 * **macOS**: download the `.dmg`, open it, and drag the app to Applications. The app is not signed with an Apple developer certificate, so the first launch will be blocked; go to System Settings > Privacy & Security, scroll down and allow it there. This only allows this one app and does not otherwise weaken your Mac's security. 
 
 ### Advanced users: run from source
 
-Requires Python 3.10 or higher, along with libraries in requirements.txt.
+Install Python (3.10 or higher), then clone the repository ...
 
-First clone the repository.
-
-Using the command line:
+... using the command line:
 
 ```
 git clone https://github.com/JhouLab/neurodemo.git
 cd neurodemo
 ```
 
-Or using [GitHub Desktop](https://desktop.github.com/): click "Add" > "Clone repository",
+... or using [GitHub Desktop](https://desktop.github.com/): click "Add" > "Clone repository",
 select `JhouLab/neurodemo` (or paste `https://github.com/JhouLab/neurodemo.git` under the URL
 tab), choose a local path, and click "Clone".
 
-**Option A: Plain Python, via scripts (venv)**
+**Option A (Easiest): Uses scripts**
 
 Windows: double-click `Create_env_windows.bat` once to set up the environment, then double-click
 `Run_this_windows.bat` any time to launch the program.
@@ -75,6 +73,9 @@ pip install -r requirements.txt
 python neurodemo.py
 ```
 
+In PowerShell, replace the `activate` line with `.\neurodemo_venv\Scripts\Activate.ps1` — the
+plain `activate` runs the cmd version, which won't persist in a PowerShell session.
+
 macOS / Linux:
 
 ```
@@ -84,17 +85,17 @@ pip install -r requirements.txt
 python neurodemo.py
 ```
 
-**Option C: Anaconda / Miniconda**
+**Option C: Manually via Anaconda / Miniconda**
 
 ```
-conda create -n neurodemo python>=3.10
+conda create -n neurodemo "python>=3.10"
 conda activate neurodemo
 pip install -r requirements.txt
 python neurodemo.py
 ```
 
-Once installed, options B and C are launched by first re-activating the environment
-(`conda activate neurodemo` or the `*/activate` commands above) and running `python neurodemo.py`.
+Note that options B and C require first re-activating the environment
+(`conda activate neurodemo` or the `*/activate` commands above) and then running `python neurodemo.py`.
 
 ### Maintainers: Build a standalone executable
 
@@ -131,6 +132,7 @@ run this from the repo root (same reason as above):
 
 ```
 pyinstaller resources/neurodemo_mac.spec
+brew install create-dmg
 mkdir -p dist/dmg
 cp -r dist/neurodemo.app dist/dmg/
 create-dmg --volname neurodemo --volicon resources/icon.icns \
