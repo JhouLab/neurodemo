@@ -54,9 +54,8 @@ macOS: double-click `Create_env_mac.command` once to set up the environment, the
 `Run_this_mac.command` any time to launch the program. (The first time, macOS may require you to
 right-click the file and choose "Open" to bypass the unidentified-developer warning.)
 
-Both scripts check if your Python is 3.10 or higher (installing from
-[python.org](https://www.python.org/downloads/) first if needed) and create a local virtual
-environment (`neurodemo_venv`) so the installed packages don't affect the rest of your system.
+The Create_env scripts create a local virtual environment (`neurodemo_venv`) so
+the installed packages don't affect the rest of your system.
 
 **Option B: Manually via command line**
 
@@ -94,16 +93,16 @@ pip install -r requirements.txt
 python neurodemo.py
 ```
 
-Note that options B and C require first re-activating the environment
+Note that in options B and C, subsequent launches require first re-activating the environment
 (`conda activate neurodemo` or the `*/activate` commands above) and then running `python neurodemo.py`.
 
 ### Maintainers: Build a standalone executable
 
 **Windows `.exe`:** the [Build Windows app](.github/workflows/build-windows.yml) GitHub Actions
 workflow builds it automatically. Trigger it from the "Actions" tab on GitHub ("Build Windows
-app" > "Run workflow"), or by pushing a tag like `v1.2.0` (which also attaches the built `.exe`
+app" > "Run workflow"), or by pushing a tag like `v1.2.1` (which also attaches the built `.exe`
 to the corresponding GitHub Release). The finished `.exe` can be downloaded from the workflow
-run's "Artifacts" section, or from the release link above.
+run's "Artifacts" section, or from the release page linked above.
 
 If you'd rather build manually: create and activate a virtual environment as above,
 install the dependencies plus `pyinstaller` and `Pillow` (needed to resize the splash image
@@ -124,15 +123,14 @@ workflow builds both Intel and Apple Silicon `.dmg` files automatically — no M
 Trigger it from the "Actions" tab on GitHub ("Build macOS app" > "Run workflow"), or by pushing
 a tag like `v1.2.0` (which also attaches the built `.dmg` files to the corresponding GitHub
 Release). The finished `.dmg` files can be downloaded from the workflow run's "Artifacts"
-section, or from the release.
+section, or from the release page linked above.
 
-If you'd rather build manually on a Mac instead: install the dependencies plus `pyinstaller`
-and [create-dmg](https://github.com/create-dmg/create-dmg) (`brew install create-dmg`), then
-run this from the repo root (same reason as above):
+If you'd rather build manually on a Mac instead: run the following from the repo root:
 
 ```
-pyinstaller resources/neurodemo_mac.spec
+pip install pyinstaller
 brew install create-dmg
+pyinstaller resources/neurodemo_mac.spec
 mkdir -p dist/dmg
 cp -r dist/neurodemo.app dist/dmg/
 create-dmg --volname neurodemo --volicon resources/icon.icns \
