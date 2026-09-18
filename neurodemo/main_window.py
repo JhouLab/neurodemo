@@ -276,13 +276,10 @@ class DemoWindow(qt.QWidget):
     def mode_changed(self):
         key = self.clamp.name + '.cmd'
         if key in self.channel_plots:
-            # Update units of CMD plot, which will be A for VC, and V for IC
             plt = self.channel_plots[key]
-            plt.setLabels(left=(plt.label_name, self.command_units()))
-
-            # Update units of sequence plot, to match main CMD plot which was fixed earlier.
-            plt2 = self.clamp_param.plot_win.plots[key]
-            plt2.setLabels(left=(plt2.axes['left']['item'].labelText, self.command_units()))
+            plt.setLabels(left=(plt.label_name, self.command_units()))  # Update cmd plot units
+            plt = self.clamp_param.plot_win.plots[key]
+            plt.setLabels(left=(plt.axes['left']['item'].labelText, self.command_units())) # Update cmd units in sequence plot too
 
     def add_plot(self, key, pname, name) -> ScrollingPlot:
         # decide on y range, label, and units for new plot
@@ -466,25 +463,18 @@ class DemoWindow(qt.QWidget):
         for k, plt in self.channel_plots.items():
             if k not in result:
                 continue
-
             if k.endswith('cmd'):
                 # If key=soma.PatchClamp.cmd, cache result to avoid having to call method again, which fails if cmd samples > buffer samples
                 result.dep_vars[k] = result[k]
-            tmp = result[k]
+            vals = result.get_plot_value(k)
+            # Update scrolling plots
 
-            if k in ["soma.IK.I", "soma.IKf.I", "soma.IKs.I", "soma.INa.I",
-                "soma.IH.I", "soma.INa1.I"]:
-                tmp *= -1.0   # flip sign of cationic currents for display. This replaces code that used to be in sequenceplot.py, line 70
-
-            if isinstance(tmp, float):
-                plt.append(tmp)
+            if isinstance(vals, float):
+                plt.append(vals)   # Is this needed?
             else:
-                # Update scrolling plots
-                plt.append(tmp[1:])
-            
-        # Send waveform to sequence plot windows, and
-        # let them decide which triggered regions of the data to extract
-        # for pulse plots
+                plt.append(vals[1:])  # Why is first value omitted?
+
+        # Send waveforms to sequence plot windows, which will then extract data for pulse plots
         self.clamp_param.new_result(result)
 
         self.params['Elapsed'] = result['t'][-1]
