@@ -12,6 +12,7 @@ permissions:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: macos-13    # Intel (x86_64) runner
@@ -32,9 +33,6 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
-      - name: Install create-dmg
-        run: brew install create-dmg
-
       - name: Build app with PyInstaller
         run: pyinstaller resources/neurodemo_mac.spec
 
@@ -42,17 +40,9 @@ jobs:
         run: |
           mkdir -p dist/dmg
           cp -r "dist/neurodemo.app" dist/dmg/
-          create-dmg \
-            --volname "neurodemo" \
-            --volicon "resources/icon.icns" \
-            --window-pos 300 300 \
-            --window-size 400 300 \
-            --icon-size 32 \
-            --icon "neurodemo.app" 100 100 \
-            --hide-extension "neurodemo.app" \
-            --app-drop-link 250 100 \
-            "dist/neurodemo-mac-${{ matrix.arch }}.dmg" \
-            "dist/dmg/"
+          ln -s /Applications "dist/dmg/Applications"
+          hdiutil create -volname "neurodemo" -srcfolder "dist/dmg" -ov -format UDZO \
+            "dist/neurodemo-mac-${{ matrix.arch }}.dmg"
 
       - uses: actions/upload-artifact@v4
         with:
