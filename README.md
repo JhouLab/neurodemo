@@ -1,9 +1,9 @@
 Neuron Demonstration
 ====================
 
-<div align="center"><img src="https://github.com/campagnola/neurodemo/blob/master/screenshot.png" width="800"></div>
+<div align="center"><img src="resources/screenshot.png" width="800"></div>
 
-Luke Campagnola & Paul Manis
+This is a fork from the project by Luke Campagnola & Paul Manis (with a few bug fixes by Tom Jhou to the sequence plotter)
 
 
 This is an educational simulation of a simple neuron.
@@ -17,74 +17,123 @@ This is an educational simulation of a simple neuron.
 * Analysis tool for generating I/V curves and similar analyses.
 * Pure python simulation; relatively easy to add new channels
 
-<div align="center"><img src="https://github.com/campagnola/neurodemo/blob/master/analysis_screenshot.png" width="500"></div>
-
-
-Requirements
-------------
-
-* Python 3.10 or higher
-* NumPy, SciPy
-* PyQt5 or 6
-* PyQtGraph
-* lmfit
-
+<div align="center"><img src="resources/analysis_screenshot.png" width="500"></div>
 
 Installation
 ------------
 
-There are multiple ways to install:
+### Most users: download the app
 
-1. Using Anaconda/miniconda:
-    
-    a. Experienced Python users can install the requirements listed above, then download the neurodemo code and run `neurodemo.py`. For everybody else, I recommend installing the [Anaconda Python distribution] (http://continuum.io/downloads). Download and run the installation package for your platform. To keep the size down, you can instead install [miniconda] (http://conda.pydata.org/miniconda.html). When you run the installer, _take note of the location it is installing to_.
+If you just want to run the app, download the prebuilt executable from the
+[Releases page](https://github.com/JhouLab/neurodemo/releases) — no Python installation required.
 
-    b. If you installed miniconda, then it is necessary to manually install numpy, scipy, and pyqt6 (if you installed Anaconda, then these packages are already installed and you can skip this step, except for lmfit). This can be done from a terminal:
+* **Windows**: download the `.exe` and double-click it to run. Windows Defender may give you a warning - just dismiss it. The warning just means I didn't pay money for a code signing certificate.
+* **macOS**: download the `.dmg`, open it, and drag the app to Applications. The app is not signed with an Apple developer certificate, so the first launch will be blocked; go to System Settings > Privacy & Security, scroll down and allow it there. This only allows this one app and does not otherwise weaken your Mac's security. 
 
-    ```
-    > conda install numpy scipy pyqt pyqtgraph lmfit
-    ```
+### Advanced users: run from source
 
-    c. Install pyqtgraph (this is required regardless of which python distribution you installed):
+Install Python (3.10 or higher), then clone the repository ...
 
-    ```
-    > pip install pyqtgraph
-    ```
+... using the command line:
 
-    d. Download the [neurodemo source code] (https://github.com/campagnola/neurodemo/archive/master.zip). You can find this by going to http://github.com/campagnola/neurodemo and clicking the "Download ZIP" button on the right side of the page. Unzip the file and you are ready to begin!
+```
+git clone https://github.com/JhouLab/neurodemo.git
+cd neurodemo
+```
 
-2. To get the latest version that runs with Python 3.10 and PyQt6 you can follow these steps, depending on your system. Note that these all create and use Python virtual environments rather than conda/mminiconda environments.
-    
-    a. Windows
-    -  Git clone the repository.
-    - In the main directory, under the windows cmd terminal, run win_install.bat.
-    - Create a shortcut on the desktop to the file win_start_demo.bat, and set the "window" to minimized. 
-        Clicking on the shortcut should start the program. 
-    
-    b. macOS
-    - Git clone the repository.
-    - In the main directory, using a zsh or bash terminal, run ./make_local_env.sh. This should create the environment, install all the required packages, and leave you with the environment activated. 
-    -  type "python demo.py" to run the program. 
-    - To make an installable file (dmg), run the shell script that is appropriate for the processor: make_M1_dmg.sh or make_x86_64_dmg.sh. The resulting dmg file will be in the folder dist/demo_(architecture).dmg. You can then install the app as you would with any other dmg file.  
+... or using [GitHub Desktop](https://desktop.github.com/): click "Add" > "Clone repository",
+select `JhouLab/neurodemo` (or paste `https://github.com/JhouLab/neurodemo.git` under the URL
+tab), choose a local path, and click "Clone".
 
-3. Create a single standalone executable file to distribute to others.
+**Option A (Easiest): Uses scripts**
 
-    - Git clone the repository. 
-    - Create *and activate* a python virtual environment (venv) in the main repository directory and install all dependencies. Also, install pyinstaller:
-    -     pip install pyinstaller
-    - At the command line, cd to main repository directory, making sure the venv is active, then enter one of the following, based on whether you are on Windows or Mac:
-    -     pyinstaller neurodemo_windows.spec
-    -     pyinstaller neurodemo_mac.spec
-    - This will create a subfolder "dist" containing a stand-alone executable that you can run by double-clicking. It will also create a subfolder "build" with intermediate files that you can generally ignore.
-    - 
-    - The Windows executable should take 4-5 seconds to launch, during which it shows a splash screen. The splash screen feature is not compatible with Mac. The Mac version also might take curiously long to launch (almost 30 seconds). Not sure why, but it seems fine after that. 
+Windows: double-click `Create_env_windows.bat` once to set up the environment, then double-click
+`Run_this_windows.bat` any time to launch the program.
 
+macOS: double-click `Create_env_mac.command` once to set up the environment, then double-click
+`Run_this_mac.command` any time to launch the program. (The first time, macOS may require you to
+right-click the file and choose "Open" to bypass the unidentified-developer warning.)
 
-Running the Demo
-----------------
+The Create_env scripts create a local virtual environment (`neurodemo_venv`) so
+the installed packages don't affect the rest of your system.
 
-You can launch the demo from the terminal by navigating to the location where you extracted the source code (eg, `cd Downloads\neurodemo\`) and then typing `python neurodemo.py`.
+**Option B: Manually via command line**
 
-Windows: Open the folder where you extracted the neurodemo source code. Right click `demo.py` and select "Open with..". Navigate to the location where you installed anaconda or miniconda (you may need to click something like "browse" or "choose another application" depending on your version of windows). Select `python.exe`.
+If you'd rather do this manually instead of via scripts.
 
-macOS: You can launch as above, or install the dmg file and just start the app. 
+Type these commands from the `neurodemo` directory to install requirements and run:
+
+Windows (cmd or PowerShell):
+
+```
+py -3 -m venv neurodemo_venv
+neurodemo_venv\Scripts\activate
+pip install -r requirements.txt
+python neurodemo.py
+```
+
+In PowerShell, replace the `activate` line with `.\neurodemo_venv\Scripts\Activate.ps1` — the
+plain `activate` runs the cmd version, which won't persist in a PowerShell session.
+
+macOS / Linux:
+
+```
+python3 -m venv neurodemo_venv
+source neurodemo_venv/bin/activate
+pip install -r requirements.txt
+python neurodemo.py
+```
+
+**Option C: Manually via Anaconda / Miniconda**
+
+```
+conda create -n neurodemo "python>=3.10"
+conda activate neurodemo
+pip install -r requirements.txt
+python neurodemo.py
+```
+
+Note that in options B and C, subsequent launches require first re-activating the environment
+(`conda activate neurodemo` or the `*/activate` commands above) and then running `python neurodemo.py`.
+
+### Maintainers: Build a standalone executable
+
+**Windows `.exe`:** the [Build Windows app](.github/workflows/build-windows.yml) GitHub Actions
+workflow builds it automatically. Trigger it from the "Actions" tab on GitHub ("Build Windows
+app" > "Run workflow"), or by pushing a tag like `v1.2.1` (which also attaches the built `.exe`
+to the corresponding GitHub Release). The finished `.exe` can be downloaded from the workflow
+run's "Artifacts" section, or from the release page linked above.
+
+If you'd rather build manually: create and activate a virtual environment as above,
+install the dependencies plus `pyinstaller` and `Pillow` (needed to resize the splash image
+from 1015x653 down to the 760x480 max), then run this from the repo root (so that the output
+`dist/`/`build/` folders land there rather than inside `resources/`):
+
+```
+pip install pyinstaller Pillow
+pyinstaller resources/neurodemo_windows.spec
+```
+
+This creates a `dist/` folder containing the standalone executable, and a `build/` folder of
+intermediate files that can be ignored. The executable shows a splash screen for a few seconds
+on launch.
+
+**macOS `.dmg`:** the [Build macOS app](.github/workflows/build-mac.yml) GitHub Actions
+workflow builds both Intel and Apple Silicon `.dmg` files automatically — no Mac required.
+Trigger it from the "Actions" tab on GitHub ("Build macOS app" > "Run workflow"), or by pushing
+a tag like `v1.2.0` (which also attaches the built `.dmg` files to the corresponding GitHub
+Release). The finished `.dmg` files can be downloaded from the workflow run's "Artifacts"
+section, or from the release page linked above.
+
+If you'd rather build manually on a Mac instead: run the following from the repo root:
+
+```
+pip install pyinstaller
+brew install create-dmg
+pyinstaller resources/neurodemo_mac.spec
+mkdir -p dist/dmg
+cp -r dist/neurodemo.app dist/dmg/
+create-dmg --volname neurodemo --volicon resources/icon.icns \
+  --app-drop-link 250 100 dist/neurodemo.dmg dist/dmg/
+```
+

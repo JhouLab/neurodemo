@@ -1,0 +1,58 @@
+name: Build macOS app
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macos-13 was retired in Dec 2025; macos-15-intel is the last
+          # Intel image and goes away itself around Fall 2027.
+          - os: macos-15-intel    # Intel (x86_64) runner
+            arch: x86_64
+          - os: macos-14          # Apple Silicon (arm64) runner
+            arch: arm64
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build app with PyInstaller
+        run: pyinstaller resources/neurodemo_mac.spec
+
+      - name: Package as .dmg
+        run: |
+          mkdir -p dist/dmg
+          cp -r "dist/neurodemo.app" dist/dmg/
+          ln -s /Applications "dist/dmg/Applications"
+          hdiutil create -volname "neurodemo" -srcfolder "dist/dmg" -ov -format UDZO \
+            "dist/neurodemo-mac-${{ matrix.arch }}.dmg"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: neurodemo-mac-${{ matrix.arch }}
+          path: dist/neurodemo-mac-${{ matrix.arch }}.dmg
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/neurodemo-mac-${{ matrix.arch }}.dmg

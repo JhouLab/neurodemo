@@ -1,14 +1,14 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 added_files = [
-    ( './neurodemo/images/channel.svg', 'images' ),
-    ( './neurodemo/images/channel2.svg', 'images' ),
-    ( './neurodemo/images/cell.svg', 'images' ),
-    ( './neurodemo/images/pipette.svg', 'images' )
+    ( '../neurodemo/images/channel.svg', 'images' ),
+    ( '../neurodemo/images/channel2.svg', 'images' ),
+    ( '../neurodemo/images/cell.svg', 'images' ),
+    ( '../neurodemo/images/pipette.svg', 'images' )
 ]
 
 a = Analysis(
-    ['neurodemo.py'],
+    ['../neurodemo.py'],
     pathex=[],
     binaries=[],
     datas=added_files,
@@ -21,12 +21,23 @@ a = Analysis(
     optimize=0,
 )
 pyz = PYZ(a.pure)
+splash = Splash(
+    'splash_screen.png',
+    binaries=a.binaries,
+    datas=a.datas,
+    text_pos=None,
+    text_size=12,
+    minify_script=True,
+    always_on_top=False,
+)
 
 exe = EXE(
     pyz,
     a.scripts,
     a.binaries,
     a.datas,
+    splash,
+    splash.binaries,
     [],
     name='neurodemo',
     debug=False,
@@ -41,4 +52,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon='icon.png',
 )

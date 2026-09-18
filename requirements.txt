@@ -1,0 +1,8 @@
+# Runtime requirements for neurodemo
+numpy>=1.21
+scipy>=1.9.1
+pyqt6
+pyqt6-sip
+pyqtgraph>=0.12.4
+lmfit>=0.9.13
+MetaArray
