@@ -41,5 +41,11 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+)
+
+app = BUNDLE(
+    exe,
+    name='neurodemo.app',
     icon='icon.icns',
+    bundle_identifier=None,
 )
