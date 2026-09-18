@@ -3,7 +3,7 @@ Neuron Demonstration
 
 <div align="center"><img src="resources/screenshot.png" width="800"></div>
 
-This is a fork from the project by Luke Campagnola & Paul Manis (with a few bug fixes by Tom Jhou to the sequence plotter)
+Luke Campagnola & Paul Manis (with tweaks by Tom Jhou)
 
 
 This is an educational simulation of a simple neuron.

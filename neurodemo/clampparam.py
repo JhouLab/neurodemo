@@ -420,7 +420,10 @@ class ClampParameter(pt.parameterTypes.SimpleParameter):
 
         # store a few recent results to ensure triggers are handled on time
         if not overflow:
-            self.result_buffer.append(result)  # add result to end of buffer list, but only if samples are NOT overflow from previous new_result() call, as that would cause samples to process twice, out of order.
+            # add result to end of buffer list, but only if samples are NOT overflow from previous new_result() call,
+            # as that would cause samples to process twice, out of order. If samples ARE overflow, then we process
+            # them right away, before the next buffer in the list, as that is the correct order of samples.
+            self.result_buffer.append(result)
             if len(self.result_buffer) > self.result_buffer_size:
                 # find the OLDEST time in the buffer, pop it off queue, and return it
                 result = self.get_oldest_result()
