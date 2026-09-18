@@ -655,10 +655,6 @@ class PatchClamp(Mechanism):
             ve = state[self, "V"]
             cmd = (cmd - ve) * self.gain
 
-        if cmd > 0:
-            # For troubleshooting problem when run length > command duration
-            pass
-
         # Compute change in electrode potential
         dve = (cmd - self.current(state)) / self.cpip    # Pipette capacitance determines dV/dt as function of cmd I. (Does this fail in VC?)
         return [dve]
