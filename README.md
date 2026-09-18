@@ -19,18 +19,6 @@ This is an educational simulation of a simple neuron.
 
 <div align="center"><img src="https://github.com/campagnola/neurodemo/blob/master/analysis_screenshot.png" width="500"></div>
 
-
-Requirements
-------------
-
-* Python 3.10 or higher
-* NumPy, SciPy
-* PyQt5 or 6
-* PyQtGraph
-* lmfit
-* MetaArray
-
-
 Installation
 ------------
 
@@ -40,11 +28,13 @@ If you just want to run the demo, download the prebuilt app for your platform fr
 [Releases page](https://github.com/JhouLab/neurodemo/releases) — no Python installation required.
 
 * **Windows**: download the `.exe` and double-click it to run. Will show a splash screen before opening.
-* **macOS**: download the `.dmg`, open it, and drag the app to Applications. No splash screen appears, and may take up to 30 seconds to open. The app is not signed with an Apple developer certificate, so the first launch will be blocked; go to System Settings > Privacy & Security and allow it there. This only allows this one app and does not otherwise weaken your Mac's security.
+* **macOS**: download the `.dmg`, open it, and drag the app to Applications. The app is not signed with an Apple developer certificate, so the first launch will be blocked; go to System Settings > Privacy & Security, scroll down and allow it there. This only allows this one app and does not otherwise weaken your Mac's security. 
 
-### Running from source (intermediate users)
+### Advanced users: run from source
 
-If you want to run from source instead (e.g. to modify the code), first clone the repository.
+Requires Python 3.10 or higher, along with libraries in requirements.txt.
+
+First clone the repository.
 
 Using the command line:
 
@@ -57,7 +47,7 @@ Or using [GitHub Desktop](https://desktop.github.com/): click "Add" > "Clone rep
 select `JhouLab/neurodemo` (or paste `https://github.com/JhouLab/neurodemo.git` under the URL
 tab), choose a local path, and click "Clone".
 
-**Option A: Plain Python (venv)**
+**Option A: Plain Python, via scripts (venv)**
 
 Windows: double-click `Create_env_windows.bat` once to set up the environment, then double-click
 `Run_this_windows.bat` any time to launch the program.
@@ -66,13 +56,15 @@ macOS: double-click `Create_env_mac.command` once to set up the environment, the
 `Run_this_mac.command` any time to launch the program. (The first time, macOS may require you to
 right-click the file and choose "Open" to bypass the unidentified-developer warning.)
 
-Both scripts check that your Python is 3.10 or higher (installing from
+Both scripts check if your Python is 3.10 or higher (installing from
 [python.org](https://www.python.org/downloads/) first if needed) and create a local virtual
 environment (`neurodemo_venv`) so the installed packages don't affect the rest of your system.
 
-If you'd rather do this manually from the command line instead of using the scripts:
+**Option B: Manually via command line**
 
-All commands below must be run from inside the `neurodemo` directory:
+If you'd rather do this manually instead of via scripts.
+
+Type these commands from the `neurodemo` directory to install requirements and run:
 
 Windows (cmd or PowerShell):
 
@@ -92,7 +84,7 @@ pip install -r requirements.txt
 python neurodemo.py
 ```
 
-**Option B: Anaconda / Miniconda**
+**Option C: Anaconda / Miniconda**
 
 ```
 conda create -n neurodemo python>=3.10
@@ -101,18 +93,18 @@ pip install -r requirements.txt
 python neurodemo.py
 ```
 
-Once installed, you can launch the demo by re-activating the environment
-(`conda activate neurodemo` or the `activate` step above) and running `python neurodemo.py`.
+Once installed, options B and C are launched by first re-activating the environment
+(`conda activate neurodemo` or the `*/activate` commands above) and running `python neurodemo.py`.
 
-### Building a standalone executable (maintainers)
+### Maintainers: Build a standalone executable
 
 **Windows `.exe`:** the [Build Windows app](.github/workflows/build-windows.yml) GitHub Actions
 workflow builds it automatically. Trigger it from the "Actions" tab on GitHub ("Build Windows
 app" > "Run workflow"), or by pushing a tag like `v1.2.0` (which also attaches the built `.exe`
 to the corresponding GitHub Release). The finished `.exe` can be downloaded from the workflow
-run's "Artifacts" section, or from the release.
+run's "Artifacts" section, or from the release link above.
 
-If you'd rather build manually instead: create and activate a virtual environment as above,
+If you'd rather build manually: create and activate a virtual environment as above,
 install the dependencies plus `pyinstaller` and `Pillow` (needed to resize the splash image
 from 1015x653 down to the 760x480 max), then run this from the repo root (so that the output
 `dist/`/`build/` folders land there rather than inside `resources/`):
@@ -145,4 +137,3 @@ create-dmg --volname neurodemo --volicon resources/icon.icns \
   --app-drop-link 250 100 dist/neurodemo.dmg dist/dmg/
 ```
 
-First launch on macOS can take up to ~30 seconds (no splash screen is shown).
