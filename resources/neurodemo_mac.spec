@@ -4,7 +4,11 @@ added_files = [
     ( '../neurodemo/images/channel.svg', 'images' ),
     ( '../neurodemo/images/channel2.svg', 'images' ),
     ( '../neurodemo/images/cell.svg', 'images' ),
-    ( '../neurodemo/images/pipette.svg', 'images' )
+    ( '../neurodemo/images/pipette.svg', 'images' ),
+    # Lands in Contents/Resources, where Qt reads it during QtCore's static
+    # initializers. Without it, Qt resolves its paths via CFBundle APIs, which
+    # segfault in this bundle layout before Python can run.
+    ( 'qt.conf', '.' ),
 ]
 
 a = Analysis(
